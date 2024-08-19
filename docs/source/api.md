@@ -41,7 +41,7 @@ import pycrosstalker
 ## plot: `pl`
 
 ```{eval-rst}
-.. module:: pilotpy.plots
+.. module:: pycrosstalker.plots
 ```
 
 ```{eval-rst}
