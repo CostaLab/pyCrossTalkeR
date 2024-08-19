@@ -31,7 +31,7 @@ Ivan G. Costa<sup>1*</sup>
 You can install CrossTalkeP with the simple commands below:
 
 ```{python}
-pip install CrossTalkeP
+pip install git+https://github.com/CostaLab/CrossTalkeR
 ```
 
 *Note: Please avoid to use the following characters in celltype name: '$'*
