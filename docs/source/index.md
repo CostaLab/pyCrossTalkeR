@@ -75,7 +75,7 @@ libgeos-dev
 
 ```{toctree}
 ---
-caption: Real World Data Benchmark - Learning a Metric from Directed Weighted Graphs
+caption: Getting Started
 maxdepth: 2
 ---
 pyCrossTalkeR
