@@ -30,6 +30,43 @@ Ivan G. Costa<sup>1*</sup>
 
 You can install CrossTalkeP with the simple commands below:
 
-``{python}
-pip install git+https://github.com/CostaLab/pyCrossTalkeR/
 ```
+pip install git+https://github.com/CostaLab/pyCrossTalkeR/
+
+```
+
+
+
+*Note: Please avoid to use the following characters in celltype name: '$'*
+
+## Possible system dependencies
+
+```
+libudunits2-dev
+libgdal-dev
+gdal-bin
+libproj-dev
+proj-data
+proj-bin
+libgeos-dev
+```
+  
+
+## Features v0.0.1
+
+- Single and Comparative Reports
+   - Cell Cell Interaction visualization
+   - Sending and Receiving Cells Ranking
+   - CCI and GCI PCA ranking
+      - All measures and PC table
+      - PC1 and PC2 based barplot
+   - LR pair visualization plot can be done
+
+
+# References
+
+[1] CrossTalkeR: Analysis and Visualisation of Ligand Receptor Networks [link](https://doi.org/10.1093/bioinformatics/btab370)
+
+[2] Heterogeneous bone-marrow stromal progenitors drive myelofibrosis via a druggable alarmin axis. [link](https://www.cell.com/cell-stem-cell/fulltext/S1934-5909(20)30542-7#secsectitle0115)
+
+[3] Comparison of Resources and Methods to infer Cell-Cell Communication from Single-cell RNA Data [link](https://www.biorxiv.org/content/10.1101/2021.05.21.445160v1.full)
