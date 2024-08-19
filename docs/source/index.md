@@ -1,6 +1,6 @@
 # pyCrossTalkeR
 
-<img src="./logo1.png" align="right" width="200"/>
+<img src="logo1.png" align="right" width="200" />
 
 James S. Nagai<sup>1</sup>,
 Nils B. Leimkühler<sup>2</sup>,
@@ -50,7 +50,7 @@ proj-data
 proj-bin
 libgeos-dev
 ```
-  
+
 
 ## Features v0.0.1
 
