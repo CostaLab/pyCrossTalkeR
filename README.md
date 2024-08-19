@@ -1,4 +1,4 @@
-# CrossTalkePython
+CrossTalkePython
 
 <img src="/logo1.png" align="right" width="200" />
 
