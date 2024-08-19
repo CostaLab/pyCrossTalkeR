@@ -71,6 +71,17 @@ libgeos-dev
 
 [3] Comparison of Resources and Methods to infer Cell-Cell Communication from Single-cell RNA Data [link](https://www.biorxiv.org/content/10.1101/2021.05.21.445160v1.full)
 
+
+
+```{toctree}
+---
+caption: Real World Data Benchmark - Learning a Metric from Directed Weighted Graphs
+maxdepth: 2
+---
+pyCrossTalkeR
+```
+
+
 ```{toctree}
 ---
 maxdepth: 2
