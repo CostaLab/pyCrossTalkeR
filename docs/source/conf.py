@@ -1,15 +1,19 @@
+
 # Configuration file for the Sphinx documentation builder.
+#
+# For the full list of built-in configuration values, see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Project information
+# -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'pyCrossTalkeR'
+copyright = '2023, James S. Nagai'
+author = 'James S. Nagai'
 
-release = '0.1'
-version = '0.1.0'
-
-# -- General configuration
+# -- General configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+version = '0.1.8.8'
 
 extensions = [
     'sphinx.ext.duration',
@@ -17,6 +21,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    "myst_parser",
+    "nbsphinx", ## for jupyter notebook
 ]
 
 intersphinx_mapping = {
@@ -27,9 +33,8 @@ intersphinx_disabled_domains = ['std']
 
 templates_path = ['_templates']
 
-# -- Options for HTML output
-
 html_theme = 'sphinx_rtd_theme'
 
 # -- Options for EPUB output
-epub_show_urls = 'footnote'
+epub_show_urls = 'footnote'    
+
