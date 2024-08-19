@@ -3,7 +3,7 @@
 ```{toctree}
 ---
 caption: pyCrossTalkeR Bone Marrow Fibrosis Example
-maxdepth: 1
+maxdepth: 3
 ---
 notebooks/pyCrossTalkeR.ipynb
 ```
