@@ -30,6 +30,6 @@ Ivan G. Costa<sup>1*</sup>
 
 You can install CrossTalkeP with the simple commands below:
 
-```{python}
-pip install git+https://github.com/CostaLab/CrossTalkeR
+``{python}
+pip install git+https://github.com/CostaLab/pyCrossTalkeR/
 ```
