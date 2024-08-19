@@ -70,3 +70,12 @@ libgeos-dev
 [2] Heterogeneous bone-marrow stromal progenitors drive myelofibrosis via a druggable alarmin axis. [link](https://www.cell.com/cell-stem-cell/fulltext/S1934-5909(20)30542-7#secsectitle0115)
 
 [3] Comparison of Resources and Methods to infer Cell-Cell Communication from Single-cell RNA Data [link](https://www.biorxiv.org/content/10.1101/2021.05.21.445160v1.full)
+
+```{toctree}
+---
+maxdepth: 2
+caption: API Reference
+---
+api
+```
+
