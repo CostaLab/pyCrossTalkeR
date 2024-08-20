@@ -1,6 +1,7 @@
 # pyCrossTalkeR
 
-<img src="https://github.com/CostaLab/pyCrossTalkeR/blob/main/logo1.png" align="right" width="200" />
+.. image:: https://raw.githubusercontent.com/CostaLab/pyCrossTalkeR/blob/main/logo1.png
+   :width: 75%
 
 James S. Nagai<sup>1</sup>,
 Nils B. Leimkühler<sup>2</sup>,
