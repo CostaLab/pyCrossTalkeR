@@ -26,6 +26,25 @@ import re
 #'@NoRd
 
 def ranking(data, out_path, sel_columns, slot="graphs"):
+    """
+    Ranking the most interactive gene (ligand or receptor)
+
+    Parameters
+    ----------
+    data : lrobject
+        lrobject
+    out_path : str
+        to save the lrobject with ranking
+    sel_columns : list of str
+        columns to consider
+    slot : str
+        slot of the networks graphs_ggi to gene cell interaction and abs
+    
+    Returns
+    -------
+    list
+    
+    """
 
     sc = StandardScaler()
     slot_data = data.get(slot, {})
