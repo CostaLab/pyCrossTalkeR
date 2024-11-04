@@ -1,7 +1,6 @@
-```{eval-rst}
-.. autosummary::
-   :toctree: generated/
-
-   tools.utils.ranking
-  
+```{toctree}
+---
+maxdepth: 3
+---
+tools.utils.ranking
 ```
