@@ -37,6 +37,7 @@ import pycrosstalker
    tools.lrobject
    tools.generate_report
    tools.utils
+   tools.utils.ranking
   
 ```
 ## plot: `pl`
