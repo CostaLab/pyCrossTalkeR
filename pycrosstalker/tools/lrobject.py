@@ -22,6 +22,34 @@ import attr
 
 @attr.s
 class LRObj:
+    """
+    This function loads the single conditions LR outputs and return the LR network It assumes that the table present the following columns Ligand, measure
+
+    Attributes
+    ----------
+    graphs :
+        All Cell Cell Interaction Networks
+    tables :
+        All tables from single condition
+    max_iter :
+        Max meanLR from all
+    max_nodes :
+        All Celltype in the experiment
+    coords :
+        Cell Cell Interaction Plots
+    colors :
+        Cell type colors
+    rankings :
+        Ranking of cells and Genes
+    loadings :
+        CCI values to remove multiple times genes
+    pca :
+        PCA results
+    annot :
+        Annotation Results
+    
+    """
+
     graphs = attr.ib(default=attr.Factory(dict))
     graphs_ggi = attr.ib(default=attr.Factory(dict))
     tables = attr.ib(default=attr.Factory(dict))

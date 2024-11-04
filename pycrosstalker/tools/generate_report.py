@@ -18,6 +18,38 @@ def analise_LR(lrpaths,
                 sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'], 
                 org='hsa', comparison=None, filtered_net=False):
     
+    """
+    Core engine to generate report. Here we perform all the computation related to CrossTalkeR
+
+    Parameters
+    ----------
+    lrpaths :
+        Paths of single condition LR data
+    genes :
+        list of genes to be considered in the sankey plots
+    out_path :
+        output directory path
+    sep :
+        character used on csv
+    threshold :
+        percentage of edges to be pruned
+    colors :
+        celltypes colorscheme
+    out_file :
+        output file names
+    output_fmt :
+        rmarkdown render output format parameter
+    sel_columns :
+        columns from data
+    report :
+        decide if a report is generated or not
+    
+    Returns
+    -------
+    Rmarkdown report all objects from each step
+    
+    """
+    
     data = read_lr_single_condition(lrpaths, 
                                     sel_columns, 
                                     out_path, 

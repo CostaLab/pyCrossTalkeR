@@ -7,7 +7,46 @@ from plotnine import *
 from adjustText import adjust_text
 
 def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True,figsize=None):
+    """
+    This function do a CCI plot
+
+    Parameters
+    ----------
+    graph :
+        Paths of single condition LR data
+    colors :
+        Cell type (Cluster) Colors
+    plt_name :
+        Plot Name (Title)
+    coords :
+        object coordinates
+    emax :
+        Max MeanLR across the all inputs, if its not defined, the method going to consider the max find within a sample
+    leg :
+        Set color legend
+    low :
+        Lower threshold: This parameter low and high defines the edges
+    high :
+        Higher threshould which will be filtered. Edges within the interval [low\,high] are filtered.
+    ignore_alpha :
+        not include transparency on the plot
+    log :
+        logscale the interactions
+    efactor :
+        edge scale factor
+    vfactor :
+        edge scale factor
+    vnames :
+        remove vertex labels
+    pg :
+        pagerank values
+
+    Returns
+    -------
+    R default plot
     
+    """
+
     # Check Maximal Weight
     if emax is None:
         emax = 0
@@ -90,6 +129,32 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     plt.show()
 
 def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi=True, include_tf=False, gene_types="all"):
+    """
+    This function is a proxy to the PCA plot in comparative conditions
+
+    Parameters
+    ----------
+    lrobj_tblPCA :
+        LRobject table with all data
+    pca_table :
+        table entry
+    dims :
+        PCA dims
+    ret :
+        return plot
+    ggi :
+        GGI mode
+    include_tf :
+        intracellular option
+    gene_types :
+        filter option of genes
+    
+    Returns
+    -------
+    R default plot
+    
+    """
+    
     pca_plot = {}
     # Extract PCA results and create a DataFrame
     pca_result = lrobj_tblPCA['pca'][pca_table]

@@ -17,7 +17,7 @@
 .. autosummary::
    :toctree: generated/
 
-   tools.Comparative_condition
+   tools.Comparative_condition.create_diff_table
   
 ```
 
@@ -27,7 +27,7 @@
 .. autosummary::
    :toctree: generated/
 
-   tools.Single_Condition
+   tools.Single_Condition.read_lr_single_condition
   
 ```
 
@@ -41,13 +41,13 @@
   
 ```
 
-### Generative Report
+### Generate Report
 
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
 
-   tools.generative_report
+   tools.generate_report.analise_LR
   
 ```
 

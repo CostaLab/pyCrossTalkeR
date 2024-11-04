@@ -31,13 +31,13 @@ def ranking(data, out_path, sel_columns, slot="graphs"):
 
     Parameters
     ----------
-    data : lrobject
+    data :
         lrobject
-    out_path : str
+    out_path :
         to save the lrobject with ranking
-    sel_columns : list of str
+    sel_columns :
         columns to consider
-    slot : str
+    slot :
         slot of the networks graphs_ggi to gene cell interaction and abs
     
     Returns
@@ -158,6 +158,22 @@ def ranking(data, out_path, sel_columns, slot="graphs"):
 #'@NoRd
 
 def ranking_net(graph, mode=True):
+    """
+    Network Ranking method
+
+    Parameters
+    ----------
+    graph :
+        lrobject
+    mode :
+        is TRUE if is comparive mode
+    
+    Returns
+    -------
+    list
+    
+    """
+
     nodes = list(graph.nodes)
     
     if not mode:
@@ -218,6 +234,26 @@ def ranking_net(graph, mode=True):
 #'@NoRd
 
 def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
+    """
+    Ranking the most interactive gene (ligand or receptor)
+
+    Parameters
+    ----------
+    rankings :
+        tables lrobject
+    slotname :
+        slot of the networks graphs_ggi to gene cell interaction and abs
+    graphname :
+        graph comparison name
+    curr.rkg :
+        ranking table
+    
+    Returns
+    -------
+    list
+    
+    """
+    
     p_f1 = p_f2 = 0.5  # probability to be at disease
     allnodes = pd.DataFrame(curr_rkg['nodes'], columns=['nodes'])
     if '_filtered' in graphname:
@@ -284,6 +320,26 @@ def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
 
 
 def comparative_med(rankings, slotname, graphname, curr_rkg):
+    """
+    Delta betweenness the most interactive gene (ligand or receptor)
+
+    Parameters
+    ----------
+    rankings :
+        tables lrobject
+    slotname :
+        slot of the networks graphs_ggi to gene cell interaction and abs
+    graphname :
+        graph comparison name
+    curr.rkg :
+        ranking table
+    
+    Returns
+    -------
+    list
+    
+    """
+     
     allnodes = curr_rkg['nodes']
     curr = graphname.split('_x_')
     p_ctr = curr[1]
@@ -309,6 +365,20 @@ def comparative_med(rankings, slotname, graphname, curr_rkg):
 
 
 def add_node_type(df):
+    """
+    Adding genetype to the gene names to distinguish biological function
+
+    Parameters
+    ----------
+    df :
+        dataframe with interaction data
+    
+    Returns
+    -------
+    df
+    
+    """
+
     df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|L" if row['type_gene_A'] == "Ligand" else row['gene_A'], axis=1)
     df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|R" if row['type_gene_A'] == "Receptor" else row['gene_A'], axis=1)
     df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|TF" if row['type_gene_A'] == "Transcription Factor" else row['gene_A'], axis=1)
