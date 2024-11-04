@@ -36,7 +36,15 @@ import pycrosstalker
    tools.Single_Condition
    tools.lrobject
    tools.generate_report
+
+.. autosummary::
+   :toctree: generated/
+
    tools.utils
+
+.. autosummary::
+   :toctree: generated/
+
    tools.utils.ranking
   
 ```
