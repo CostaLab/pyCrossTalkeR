@@ -76,7 +76,7 @@ libgeos-dev
 ```{toctree}
 ---
 caption: Getting Started
-maxdepth: 4
+maxdepth: 2
 ---
 pyCrossTalkeR
 ```
@@ -84,7 +84,7 @@ pyCrossTalkeR
 
 ```{toctree}
 ---
-maxdepth: 4
+maxdepth: 2
 caption: API Reference
 ---
 api
