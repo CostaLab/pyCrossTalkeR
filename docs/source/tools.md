@@ -8,20 +8,19 @@
 .. currentmodule:: pycrosstalker
 ```
 
-
-### Trajectory & Clusters Analysis
-
-### Comparitive Condition
+### Generate Report
 
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
 
-   tools.Comparative_condition.create_diff_table
+   tools.generate_report.analise_LR
   
 ```
 
-### Single Condition
+### Analysis Core
+
+#### Single Condition
 
 ```{eval-rst}
 .. autosummary::
@@ -31,23 +30,13 @@
   
 ```
 
-### lrobject
+#### Comparitive Condition
 
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
 
-   tools.lrobject
-  
-```
-
-### Generate Report
-
-```{eval-rst}
-.. autosummary::
-   :toctree: generated/
-
-   tools.generate_report.analise_LR
+   tools.Comparative_condition.create_diff_table
   
 ```
 
@@ -62,5 +51,15 @@
    tools.utils.comparative_pagerank
    tools.utils.comparative_med
    tools.utils.add_node_type
+  
+```
+
+### lrobject
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   tools.lrobject
   
 ```

@@ -1,4 +1,4 @@
-## plot: `pl`
+## Plots: `pl`
 
 ```{eval-rst}
 .. module:: pycrosstalker.plots
@@ -7,7 +7,7 @@
 ```{eval-rst}
 .. currentmodule:: pycrosstalker
 ```
-### plots
+### Plots
 
 ```{eval-rst}
 .. autosummary::
