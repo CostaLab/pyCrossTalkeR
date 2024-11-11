@@ -19,7 +19,7 @@ def analise_LR(lrpaths,
                 org='hsa', comparison=None, filtered_net=False):
     
     """
-    Core engine to generate report. Here we perform all the computation related to CrossTalkeR
+    Core engine to generate report. Here we perform all the computation related to pyCrossTalkeR
 
     Parameters
     ----------
@@ -41,8 +41,6 @@ def analise_LR(lrpaths,
         rmarkdown render output format parameter
     sel_columns :
         columns from data
-    report :
-        decide if a report is generated or not
     
     Returns
     -------
