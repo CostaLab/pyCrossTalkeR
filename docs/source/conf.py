@@ -23,6 +23,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     "myst_parser",
     "nbsphinx", ## for jupyter notebook
+    "sphinx_plotly_directive",
 ]
 
 intersphinx_mapping = {
@@ -38,3 +39,7 @@ html_theme = 'sphinx_rtd_theme'
 # -- Options for EPUB output
 epub_show_urls = 'footnote'    
 
+html_js_files = [
+    "require.min.js",
+    "custom.js",
+]
