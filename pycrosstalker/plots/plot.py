@@ -533,7 +533,7 @@ def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0,1]),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0,1]),
         plot_bgcolor='white',
-        width = 1000,
+        width = 800,
         height = 600,
         title = title,
         font = dict(size=10)
