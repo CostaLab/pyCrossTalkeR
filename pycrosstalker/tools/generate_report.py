@@ -57,6 +57,8 @@ def analise_LR(lrpaths,
     print("Create a Differential Table")
     if len(lrpaths) > 1:
         data = create_diff_table(data, out_path, comparison)
+        data = fisher_test_cci(data, 'LRScore', out_path, comparison)
+        data = filtered_graphs(data, out_path)
 
     print("Calculating CCI Ranking")
     data = ranking(data, out_path, sel_columns=sel_columns, slot="graphs")

@@ -341,9 +341,15 @@ def comparative_med(rankings, slotname, graphname, curr_rkg):
     """
      
     allnodes = curr_rkg['nodes']
-    curr = graphname.split('_x_')
-    p_ctr = curr[1]
-    q_exp = curr[0]
+    if '_filtered' in graphname:
+        curr = re.sub('_filtered', '', graphname)
+        curr = re.split('_x_', curr)
+        p_ctr = curr[1]
+        q_exp = curr[0]
+    else:
+        curr = re.split('_x_', graphname)
+        p_ctr = curr[1]
+        q_exp = curr[0]
 
    
     if "_ggi" in slotname:
@@ -388,3 +394,199 @@ def add_node_type(df):
     df['gene_B'] = df.apply(lambda row: f"{row['gene_B']}|TF" if row['type_gene_B'] == "Transcription Factor" else row['gene_B'], axis=1)
     
     return df
+
+
+def fisher_test_cci(data, measure, out_path, comparison=None):
+    """
+    Evaluate Differences in the edge proportion
+
+    Parameters
+    ----------
+    data :
+        data
+    measure :
+        intensity
+    out_path :
+        save path
+    
+    Returns
+    -------
+    data (lr_object) with fisher stats
+    
+    """
+
+    if comparison is not None:
+        for pair in comparison:
+            ctr_name = pair[1]
+            exp_name = pair[0]
+            
+            c = data['tables'][ctr_name].groupby('cellpair').size().reset_index(name='measure')
+            e = data['tables'][exp_name].groupby('cellpair').size().reset_index(name='measure')
+
+            joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
+            
+            pvals = []
+            measure_ctr_sum = joined['measure_ctr'].sum()
+            measure_exp_sum = joined['measure_exp'].sum()
+            for idx, row in joined.iterrows():
+                ctotal = joined['measure_ctr'].sum() - row['measure_ctr']
+                etotal = joined['measure_exp'].sum() - row['measure_exp']
+                matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+
+                n_resamples = 1000
+                np.random.seed(42)  # For reproducibility
+
+                matrix_data = np.hstack([
+                    np.repeat(0, matrix[0, 0]),
+                    np.repeat(1, matrix[0, 1]),
+                    np.repeat(2, matrix[1, 0]),
+                    np.repeat(3, matrix[1, 1]),
+                ])
+
+                bootstrap_p_values = []
+                for _ in range(n_resamples):
+                    resampled_data = np.random.choice(matrix_data, size=matrix_data.size, replace=True)
+                    resampled_table = np.array([
+                        [np.sum(resampled_data == 0), np.sum(resampled_data == 1)],
+                        [np.sum(resampled_data == 2), np.sum(resampled_data == 3)]
+                    ])
+                    _, p_value = fisher_exact(resampled_table)
+                    bootstrap_p_values.append(p_value)
+
+                # Estimate the empirical p-value
+                bootstrap_p_values = np.array(bootstrap_p_values)
+                empirical_p_value = np.mean(bootstrap_p_values <= p_value)
+
+                # Fisher's exact test
+                _, p_value_1 = fisher_exact(matrix)
+
+                # print(p_value_1)
+                # print(empirical_p_value)
+                
+                # Log odds ratio
+                odds_ratio = row['measure_exp'] / row['measure_ctr'] if row['measure_ctr'] != 0 else np.nan
+                lodds = np.log2(odds_ratio) if odds_ratio > 0 else np.nan
+                
+                pvals.append({
+                    'cellpair': row['cellpair'],
+                    'p_value': p_value_1,
+                    'lodds': lodds
+                })
+
+            pval_df = pd.DataFrame(pvals)
+            data['stats'][f'{exp_name}_x_{ctr_name}'] = pval_df
+
+        with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+            pickle.dump(data, f)
+
+        return data
+
+    else:
+        if len(data['tables']) >= 2:
+            c = data['tables']['CTR'].groupby('cellpair').size().reset_index(name='measure')
+
+            for i in range(1, len(data['tables'])):
+                if '_x_' not in list(data['tables'].keys())[i]:
+                    e = data['tables'][list(data['tables'].keys())[i]].groupby('cellpair').size().reset_index(name='measure')
+
+                    # Merge control and experimental data on 'cellpair'
+                    joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
+
+                    pvals = []
+                    measure_ctr_sum = joined['measure_ctr'].sum()
+                    measure_exp_sum = joined['measure_exp'].sum()
+                    for idx, row in joined.iterrows():
+                        ctotal = measure_ctr_sum - row['measure_ctr']
+                        etotal = measure_exp_sum - row['measure_exp']
+                        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+
+                        n_resamples = 1000
+                        np.random.seed(42)  # For reproducibility
+
+                        matrix_data = np.hstack([
+                            np.repeat(0, matrix[0, 0]),
+                            np.repeat(1, matrix[0, 1]),
+                            np.repeat(2, matrix[1, 0]),
+                            np.repeat(3, matrix[1, 1]),
+                        ])
+
+                        bootstrap_p_values = []
+                        for _ in range(n_resamples):
+                            resampled_data = np.random.choice(matrix_data, size=matrix_data.size, replace=True)
+                            resampled_table = np.array([
+                                [np.sum(resampled_data == 0), np.sum(resampled_data == 1)],
+                                [np.sum(resampled_data == 2), np.sum(resampled_data == 3)]
+                            ])
+                            _, p_value = fisher_exact(resampled_table)
+                            bootstrap_p_values.append(p_value)
+
+                        # Estimate the empirical p-value
+                        bootstrap_p_values = np.array(bootstrap_p_values)
+                        empirical_p_value = np.mean(bootstrap_p_values <= p_value)
+
+                        # Fisher's exact test
+                        _, p_value_1 = fisher_exact(matrix)
+
+                        # print(p_value_1)
+                        # print(empirical_p_value)
+
+                        # log odds ratio
+                        odds_ratio = row['measure_exp'] / row['measure_ctr'] if row['measure_ctr'] != 0 else np.nan
+                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else np.nan
+
+                        pvals.append({
+                            'cellpair': row['cellpair'],
+                            'p_value': p_value_1,
+                            'lodds': lodds
+                        })
+
+                    pval_df = pd.DataFrame(pvals)
+                    data['stats'][f'{list(data["tables"].keys())[i]}_x_{list(data["tables"].keys())[0]}'] = pval_df
+
+            with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+                pickle.dump(data, f)
+
+            return data
+
+def filtered_graphs(data, out_path):
+    """
+    Filter comparison graphs by statistics
+
+    Parameters
+    ----------
+    data :
+        data
+    out_path :
+        save path
+    
+    Returns
+    -------
+    data (lr_object) with fisher comparison graphs
+    
+    """
+
+    temp = {}
+    for name, graph in data['graphs'].items():
+        if '_x_' in name:
+            h = [edge[0] for edge in graph.edges()]
+            f = [edge[1] for edge in graph.edges()]
+
+            stats = data['stats'][name]
+            
+            significant_edges = stats[stats['p_value'] <= 0.05]
+            
+            significant_edge_pairs = [
+                (h[i], f[i]) for i, edge_pair in enumerate(zip(h, f))
+                if f"{h[i]}@{f[i]}" in significant_edges['cellpair'].values
+            ]
+
+            filtered_graph = graph.edge_subgraph(significant_edge_pairs).copy()
+            temp[name] = filtered_graph
+
+    for name in temp:   
+        data['graphs'][f"{name}_filtered"] = temp[name]
+
+    with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+        pickle.dump(data, f)
+
+    return data
