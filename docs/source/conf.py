@@ -23,7 +23,6 @@ extensions = [
     'sphinx.ext.intersphinx',
     "myst_parser",
     "nbsphinx", ## for jupyter notebook
-    "sphinx_plotly_directive",
 ]
 
 intersphinx_mapping = {
