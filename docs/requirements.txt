@@ -3,3 +3,4 @@ nbsphinx
 sphinx_rtd_theme
 sphinx
 plotly
+sphinx-rtd-size
