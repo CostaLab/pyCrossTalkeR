@@ -23,7 +23,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     "myst_parser",
     "nbsphinx", ## for jupyter notebook
-    "spinx_rtd_size",
+    "sphinx_rtd_size",
 ]
 
 intersphinx_mapping = {
