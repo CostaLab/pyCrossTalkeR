@@ -315,8 +315,11 @@ def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None
                 elif type == 'LTF' or type == 'TFL':
                     rankings_table = rankings_table[rankings_table['nodes'].str.contains('\\|' + 'LTF' + '|\\|' + 'TFL')]
 
+        rankings_table = rankings_table.sort_values(by=ranking)
+        
         if mode == 'cgi':
-            rankings_table = rankings_table.loc[rankings_table[ranking].abs().nlargest(20).index]
+            rankings_table = pd.concat([rankings_table.head(top_num), rankings_table.tail(top_num)])
+            # rankings_table.loc[rankings_table[ranking].abs().nlargest(20).index]
         else:
             pass
 
@@ -325,7 +328,6 @@ def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None
         elif filter_sign == 'neg':
             rankings_table = rankings_table[rankings_table['ranking'] < 0]
 
-        rankings_table = rankings_table.sort_values(by=ranking)
 
         if rankings_table.empty:
             return "No entries with provided Filters."
