@@ -9,6 +9,7 @@ import plotly
 import plotly.graph_objects as go
 from plotnine import *
 from adjustText import adjust_text
+from gprofiler import GProfiler
 
 
 def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True,figsize=None):
@@ -134,6 +135,7 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     # Show the plot
     plt.tight_layout()
     plt.show()
+
 
 def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi=True, include_tf=False, gene_types="all"):
     """
@@ -270,6 +272,7 @@ def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi
     if ret:
         return pca_plot
     
+
 def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None, mode = "cci", top_num = 10):
     """
     This function generates the barplot for a given network ranking on the CGI level. Further, the genes can be filtered by selected gene types to filter the plot.
@@ -362,6 +365,7 @@ def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None
         plt.tight_layout()
         plt.show()
 
+
 def plot_sankey(lrobj_tbl, target = None, ligand_cluster = None, receptor_cluster = None, plt_name = None, threshold = 50, tfflag = True):
     """
     This function selected genes sankey plot
@@ -435,6 +439,7 @@ def plot_sankey(lrobj_tbl, target = None, ligand_cluster = None, receptor_cluste
     else:
         print(f"Gene->{target} Not Found")
     
+
 def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
     """
     Helper function to the function plot_sankey()
@@ -543,3 +548,77 @@ def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
         )
     
     fig.show(config={"responsive": True})
+
+
+def gene_annotation(gene_list_to_profile,
+                    num_gos: int = 15,
+                    figsize=(10,6),
+                    title: str = None,
+                    font_size: int = 10,
+                    organism: str = 'hsapiens',
+                    dpi: int = 100,
+                    s: int = 100,
+                    color: str = 'tab:blue'):
+    """
+    Perform Gene Ontology (GO) enrichment analysis and create a scatterplot of enriched terms.
+
+    Parameters:
+    ----------
+    num_gos: int, optional
+        Number of GO terms to plot. Default is 5.
+    figsize: tuple, optional
+        figsize. Default is (6,6).
+    title: str
+        Title of the plot.
+    font_size: int, optional
+        Font size for labels. Default is 10.
+    0rganism: str, optional
+        The organism for GO analysis. Default is 'hsapiens'.
+    dpi: int, optional
+        Dots per inch for the saved plot image. Default is 100.
+    s: int, optional
+        Marker size for the scatterplot. Default is 200.
+    color: str, optional
+        Color of the scatterplot markers. Default is 'tab:blue'.
+
+    Returns:
+    --------
+    None
+        Plots the scatterplot of enriched GO terms.
+    """
+
+    
+    gp = GProfiler(return_dataframe=True)
+    if gene_list_to_profile:
+        gprofiler_results = gp.profile(organism = organism,
+                                       query = gene_list_to_profile)
+    else:
+        return "Genes list is empty!"
+    
+    
+    if(gprofiler_results.shape[0] == 0):
+        return "Not enough information!"
+
+    
+    if(gprofiler_results.shape[0] < num_gos):
+        num_gos = gprofiler_results.shape[0]
+
+  
+    selected_gps = gprofiler_results.head(num_gos)[['name', 'p_value']]
+    
+    selected_gps['nlog10'] = -np.log10(selected_gps['p_value'].values)
+
+    plt.figure(figsize = figsize, dpi = dpi)
+    # plt.style.use('default')
+    sns.scatterplot(data = selected_gps, x = "nlog10", y = "name", s = s, color = color)
+
+    plt.title(title, fontsize = font_size)
+
+    plt.xticks(size = font_size)
+    plt.yticks(size = font_size)
+
+    plt.ylabel("GO Terms", size = font_size)
+    plt.xlabel("-$log_{10}$ (P-value)", size = font_size)
+
+    plt.tight_layout()
+    plt.show()

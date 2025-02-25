@@ -4,7 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import igraph
 import itertools
-from scipy.stats import fisher_exact
+from scipy.stats import fisher_exact, MonteCarloMethod
 import pickle
 from itertools import combinations
 import os
@@ -24,6 +24,7 @@ import re
 #'@importFrom tidyr %>%
 #'@importFrom stats prcomp
 #'@NoRd
+
 
 def ranking(data, out_path, sel_columns, slot="graphs"):
     """
@@ -318,7 +319,6 @@ def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
 #'@return list
 #'@NoRd
 
-
 def comparative_med(rankings, slotname, graphname, curr_rkg):
     """
     Delta betweenness the most interactive gene (ligand or receptor)
@@ -340,7 +340,7 @@ def comparative_med(rankings, slotname, graphname, curr_rkg):
     
     """
      
-    allnodes = curr_rkg['nodes']
+    allnodes = pd.DataFrame(curr_rkg['nodes'], columns=['nodes'])
     if '_filtered' in graphname:
         curr = re.sub('_filtered', '', graphname)
         curr = re.split('_x_', curr)
@@ -353,21 +353,23 @@ def comparative_med(rankings, slotname, graphname, curr_rkg):
 
    
     if "_ggi" in slotname:
-        p = rankings[p_ctr + '_ggi']['Mediator']
-        q = rankings[q_exp + '_ggi']['Mediator']
+        p = rankings[p_ctr + '_ggi'][['nodes', 'Mediator']]
+        q = rankings[q_exp + '_ggi'][['nodes', 'Mediator']]
     else:
-        p = rankings[p_ctr]['Mediator'][rankings[q_exp]['Mediator'].index]
-        q = rankings[q_exp]['Mediator']
-    
+        p = rankings[p_ctr][['nodes', 'Mediator']].loc[rankings[q_exp][['nodes', 'Mediator']].index]
+        q = rankings[q_exp][['nodes', 'Mediator']]
 
-    final = pd.DataFrame({'p.ctr': p, 'p.dis': q, 'names': allnodes})
-    final['p.ctr'] = final['p.ctr'].fillna(0)
-    final['p.dis'] = final['p.dis'].fillna(0)
-    curr_rkg['Mediator'] = final['p.dis'] - final['p.ctr']
+    p.columns = ['nodes', 'm_ctr']
+    q.columns = ['nodes', 'm_exp']
+
+    final = pd.merge(allnodes,p, on='nodes', how='left')
+    final = pd.merge(final, q, on='nodes', how='left')
+
+    final['m_ctr'] = final['m_ctr'].fillna(0)
+    final['m_exp'] = final['m_exp'].fillna(0)
+
+    curr_rkg['Mediator'] = final['m_exp'] - final['m_ctr']
     return curr_rkg
-
-
-
 
 
 def add_node_type(df):
@@ -490,15 +492,22 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
                     e = data['tables'][list(data['tables'].keys())[i]].groupby('cellpair').size().reset_index(name='measure')
 
                     # Merge control and experimental data on 'cellpair'
-                    joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
+                    joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp')).fillna(0.0)
 
                     pvals = []
                     measure_ctr_sum = joined['measure_ctr'].sum()
                     measure_exp_sum = joined['measure_exp'].sum()
+                    # print("sums are: ", measure_ctr_sum, measure_exp_sum)
+                    # print(joined.head)
                     for idx, row in joined.iterrows():
                         ctotal = measure_ctr_sum - row['measure_ctr']
                         etotal = measure_exp_sum - row['measure_exp']
                         matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+                        rng = np.random.default_rng()
+                        method = MonteCarloMethod(rng=rng)
+
+                        # Fisher's exact test
+                        _, og_p_value = fisher_exact(matrix, method=method)
 
                         n_resamples = 1000
                         np.random.seed(42)  # For reproducibility
@@ -517,17 +526,14 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
                                 [np.sum(resampled_data == 0), np.sum(resampled_data == 1)],
                                 [np.sum(resampled_data == 2), np.sum(resampled_data == 3)]
                             ])
-                            _, p_value = fisher_exact(resampled_table)
+                            _, p_value = fisher_exact(resampled_table, alternative='two-sided')
                             bootstrap_p_values.append(p_value)
 
                         # Estimate the empirical p-value
                         bootstrap_p_values = np.array(bootstrap_p_values)
-                        empirical_p_value = np.mean(bootstrap_p_values <= p_value)
+                        empirical_p_value = np.mean(bootstrap_p_values >= og_p_value)
 
-                        # Fisher's exact test
-                        _, p_value_1 = fisher_exact(matrix)
-
-                        # print(p_value_1)
+                        # print(og_p_value)
                         # print(empirical_p_value)
 
                         # log odds ratio
@@ -536,7 +542,7 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
 
                         pvals.append({
                             'cellpair': row['cellpair'],
-                            'p_value': p_value_1,
+                            'p_value': og_p_value,
                             'lodds': lodds
                         })
 
@@ -547,6 +553,7 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
                 pickle.dump(data, f)
 
             return data
+
 
 def filtered_graphs(data, out_path):
     """
