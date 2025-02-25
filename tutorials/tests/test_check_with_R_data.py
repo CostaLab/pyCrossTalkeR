@@ -34,7 +34,7 @@ def test_check_table_data():
 
 def test_check_rankings_data():
     print("\n")
-    rankings_list = ['CTR', 'EXP', 'EXP_x_CTR', 'CTR_ggi', 'EXP_ggi', 'EXP_x_CTR_ggi']
+    rankings_list = ['CTR', 'EXP', 'EXP_x_CTR', 'EXP_x_CTR_filtered', 'CTR_ggi', 'EXP_ggi', 'EXP_x_CTR_ggi']
     for ranking in rankings_list:
         # Load table data from R
         ranking_R = pd.read_csv(f'R_data/ranking_{ranking}.csv')
@@ -52,32 +52,45 @@ def test_check_rankings_data():
 
 def test_check_graphs_data():
     print("\n")
-    graphs_list = ['CTR', 'EXP', 'EXP_x_CTR']
-    for i in range(2):
-        for graph in graphs_list:
-            # Load table data from R
-            graph_R = pd.read_csv(f'R_data/graph_{graph}.csv') if i == 0 else pd.read_csv(f'R_data/graph_ggi_{graph}.csv')
-            graph_R_df = pd.DataFrame({
-                "edge": graph_R['from'] + '-' + graph_R['to'],
-                "LRScore": graph_R['LRScore'],
-            })
+    graphs_list = ['CTR', 'EXP', 'EXP_x_CTR',  'EXP_x_CTR_filtered', 'CTR_ggi', 'EXP_ggi', 'EXP_x_CTR_ggi']
+    for i, graph in enumerate(graphs_list):
+        # Load table data from R
+        graph_R = pd.read_csv(f'R_data/graph_{graph}.csv')
+        graph_R_df = pd.DataFrame({
+            "edge": graph_R['from'] + '-' + graph_R['to'],
+            "LRScore": graph_R['LRScore'],
+        })
 
-            graph_py = data['graphs'][graph] if i == 0 else data['graphs_ggi'][graph]
-            edges = [edge[0] + '-' + edge[1] for edge in graph_py.edges()]
-            lrscores = [edge[2]['LRScore'] for edge in graph_py.edges(data=True)]
-            graph_py_df = pd.DataFrame({
-                "edge": edges,
-                "LRScore": lrscores,
-            })
+        graph_py = data['graphs'][graph] if i < 4  else data['graphs_ggi'][str(graph)[:-4]]
+        edges = [edge[0] + '-' + edge[1] for edge in graph_py.edges()]
+        lrscores = [edge[2]['LRScore'] for edge in graph_py.edges(data=True)]
+        graph_py_df = pd.DataFrame({
+            "edge": edges,
+            "LRScore": lrscores,
+        })
 
-            graph_R_df = graph_R_df.sort_values(by='edge').reset_index(drop=True)
-            graph_py_df = graph_py_df.sort_values(by='edge').reset_index(drop=True)
+        graph_R_df = graph_R_df.sort_values(by='edge').reset_index(drop=True)
+        graph_py_df = graph_py_df.sort_values(by='edge').reset_index(drop=True)
 
-            assert graph_py_df['edge'].equals(graph_R_df['edge'])
-            assert (abs(graph_py_df['LRScore'] - graph_R_df['LRScore']) < 0.01).all()
+        assert graph_py_df['edge'].equals(graph_R_df['edge'])
+        assert (abs(graph_py_df['LRScore'] - graph_R_df['LRScore']) < 0.01).all()
 
-            print(f"{graph}{'' if i == 0 else '_ggi'} graph data is similar")
+        print(f"{graph} graph data is similar")
 
+def test_check_stats_data():
+    stats_R = pd.read_csv('R_data/stat_EXP_x_CTR.csv')
+    stats_R_df = pd.DataFrame({
+        "cellpair": stats_R['columns_name'],
+        "p_value": stats_R['p'],
+        "lodds": stats_R['lodds'],
+    })
+    stats_R_df = stats_R_df.sort_values(by='cellpair').reset_index(drop=True)
 
+    stats_py = data['stats']['EXP_x_CTR']
+    stats_py_df = stats_py.sort_values(by='cellpair').reset_index(drop=True)
 
+    assert stats_py_df['cellpair'].equals(stats_R_df['cellpair'])
+    assert (abs(stats_py_df['p_value'] - stats_R_df['p_value']) < 0.01).all()
+    assert (abs(stats_py_df['lodds'] - stats_R_df['lodds']) < 0.01).all()
 
+    print("\nEXP_x_CTR stats data is similar")

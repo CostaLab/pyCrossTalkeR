@@ -492,57 +492,35 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
                     e = data['tables'][list(data['tables'].keys())[i]].groupby('cellpair').size().reset_index(name='measure')
 
                     # Merge control and experimental data on 'cellpair'
-                    joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp')).fillna(0.0)
-
+                    joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
+                    
                     pvals = []
                     measure_ctr_sum = joined['measure_ctr'].sum()
                     measure_exp_sum = joined['measure_exp'].sum()
-                    # print("sums are: ", measure_ctr_sum, measure_exp_sum)
-                    # print(joined.head)
                     for idx, row in joined.iterrows():
                         ctotal = measure_ctr_sum - row['measure_ctr']
                         etotal = measure_exp_sum - row['measure_exp']
                         matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
-                        rng = np.random.default_rng()
-                        method = MonteCarloMethod(rng=rng)
-
-                        # Fisher's exact test
-                        _, og_p_value = fisher_exact(matrix, method=method)
-
-                        n_resamples = 1000
+                        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
+    
+                        # Monte Carlo resampling (if B > 0)
+                        B = 1000
                         np.random.seed(42)  # For reproducibility
+                        if B > 0:
+                            count = 0
+                            for _ in range(B):
+                                shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
+                                if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
+                                    count += 1
+                            perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
+                        else:
+                            perm_p_value = None
 
-                        matrix_data = np.hstack([
-                            np.repeat(0, matrix[0, 0]),
-                            np.repeat(1, matrix[0, 1]),
-                            np.repeat(2, matrix[1, 0]),
-                            np.repeat(3, matrix[1, 1]),
-                        ])
-
-                        bootstrap_p_values = []
-                        for _ in range(n_resamples):
-                            resampled_data = np.random.choice(matrix_data, size=matrix_data.size, replace=True)
-                            resampled_table = np.array([
-                                [np.sum(resampled_data == 0), np.sum(resampled_data == 1)],
-                                [np.sum(resampled_data == 2), np.sum(resampled_data == 3)]
-                            ])
-                            _, p_value = fisher_exact(resampled_table, alternative='two-sided')
-                            bootstrap_p_values.append(p_value)
-
-                        # Estimate the empirical p-value
-                        bootstrap_p_values = np.array(bootstrap_p_values)
-                        empirical_p_value = np.mean(bootstrap_p_values >= og_p_value)
-
-                        # print(og_p_value)
-                        # print(empirical_p_value)
-
-                        # log odds ratio
-                        odds_ratio = row['measure_exp'] / row['measure_ctr'] if row['measure_ctr'] != 0 else np.nan
-                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else np.nan
+                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
 
                         pvals.append({
                             'cellpair': row['cellpair'],
-                            'p_value': og_p_value,
+                            'p_value': p_value,
                             'lodds': lodds
                         })
 
