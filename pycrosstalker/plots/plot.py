@@ -622,3 +622,53 @@ def gene_annotation(gene_list_to_profile,
 
     plt.tight_layout()
     plt.show()
+
+def plot_volcane(df):
+    """
+    This function generates a Volcano plot
+
+    Parameters
+    ----------
+    df :
+        Dataframe
+
+    Returns
+    -------
+    Python default volcano plot
+
+    """
+    np.random.seed(42)
+    data = df
+    data['neg_log10_p_value'] = -np.log10(df['p_value'])
+    
+    p_threshold = 0.05
+    fc_threshold = 1
+
+    data["color"] = "gray"
+    data.loc[(data["lodds"] > fc_threshold) & (data["p_value"] < p_threshold), "color"] = "red"
+    data.loc[(data["lodds"] < -fc_threshold) & (data["p_value"] < p_threshold), "color"] = "red"
+    data.loc[(data["lodds"] > -fc_threshold) & (data["lodds"] < fc_threshold) & (data["p_value"] < p_threshold), "color"] = "blue"
+    data.loc[(data["lodds"] < -fc_threshold) & (data["p_value"] > p_threshold), "color"] = "green"
+    data.loc[(data["lodds"] > fc_threshold) & (data["p_value"] > p_threshold), "color"] = "green"
+
+    # Plot
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x="lodds", y="neg_log10_p_value", hue="color", palette={"gray": "gray", "red": "red", "blue": "blue", "green": "green"}, data=data, edgecolor=None, alpha=0.7)
+
+    # Add significance threshold lines
+    plt.axhline(-np.log10(p_threshold), linestyle="--", color="black", linewidth=1)  # P-value threshold
+    plt.axvline(fc_threshold, linestyle="--", color="black", linewidth=1)  # Positive log2FC threshold
+    plt.axvline(-fc_threshold, linestyle="--", color="black", linewidth=1)  # Negative log2FC threshold
+
+    for i, row in data.iterrows():
+        if row['color'] == 'red':
+            plt.text(row["lodds"], row["neg_log10_p_value"], row["cellpair"], fontsize=8, ha='right')
+
+    x_limit = max(abs(data["lodds"].min()), abs(data["lodds"].max()))
+    plt.xlim(-x_limit-1, x_limit+1)
+
+    plt.xlabel(r"Log$_{2}$ Fold Change")
+    plt.ylabel(r"-Log$_{10}$(p-value)")
+    plt.title("Volcano Plot")
+    plt.legend([],[], frameon=False)  # Hide legend
+    plt.show()
