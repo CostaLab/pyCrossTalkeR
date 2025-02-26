@@ -623,6 +623,7 @@ def gene_annotation(gene_list_to_profile,
     plt.tight_layout()
     plt.show()
 
+
 def plot_volcane(df):
     """
     This function generates a Volcano plot
@@ -672,3 +673,29 @@ def plot_volcane(df):
     plt.title("Volcano Plot")
     plt.legend([],[], frameon=False)  # Hide legend
     plt.show()
+
+
+def plot_clustermap(data, title):
+    # Create pivot table for Gene_A-Gene_B without aggregation
+    pivot_table = data.groupby(["source", "target"])["LRScore"].sum().unstack().fillna(0)
+    xlabel, ylabel = "Target Tissue", "Source Tissue"
+
+    # Plot heatmap
+    g = sns.clustermap(
+        pivot_table,
+        figsize=(9, 7),
+        annot=True,
+        linewidths=0.5,
+        method="ward",    # Clustering method (options: single, complete, average, ward)
+        metric="euclidean",  # Distance metric (options: euclidean, cityblock, cosine, etc.)
+        dendrogram_ratio=(0.2, 0.2),  # Adjust dendrogram size
+        cbar_pos=(0.02, 0.8, 0.03, 0.15)  # Adjust colorbar position
+    )
+
+    # Set Labels
+    g.ax_heatmap.set_xlabel(xlabel)
+    g.ax_heatmap.set_ylabel(ylabel)
+    plt.title(title, fontsize=14)
+
+    plt.show()
+

@@ -19,5 +19,6 @@
    plots.plot_sankey
    plots.gene_annotation
    plots.plot_volcano
+   plots.plot_clustermap
    
 ```
