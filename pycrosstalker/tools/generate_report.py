@@ -58,6 +58,7 @@ def analise_LR(lrpaths,
     if len(lrpaths) > 1:
         data = create_diff_table(data, out_path, comparison)
         data = fisher_test_cci(data, 'LRScore', out_path, comparison)
+        data = mannwitu_test_cci(data, 'LRScore', out_path, comparison)
         data = filtered_graphs(data, out_path)
 
     print("Calculating CCI Ranking")

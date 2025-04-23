@@ -52,6 +52,7 @@
    tools.utils.comparative_med
    tools.utils.add_node_type
    tools.utils.fisher_test_cci
+   tools.utils.mannwitu_test_cci
    tools.utils.filtered_graphs
   
 ```

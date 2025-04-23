@@ -4,7 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import igraph
 import itertools
-from scipy.stats import fisher_exact, MonteCarloMethod
+from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu
 import pickle
 from itertools import combinations
 import os
@@ -573,5 +573,75 @@ def filtered_graphs(data, out_path):
 
     with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
         pickle.dump(data, f)
+
+    return data
+
+
+def mannwitu_test_cci(data, measure, out_path, comparison=None):
+    """
+    Evaluate Differences in the edge strength
+
+    Parameters
+    ----------
+    data :
+        data
+    measure :
+        intensity
+    out_path :
+        save path
+    
+    Returns
+    -------
+    data (lr_object) with mannwittu stats
+    
+    """
+
+    lcellpair = {}
+    for key, df in data['tables'].items():
+        lcellpair[key] = df['cellpair'].unique()
+
+    if comparison:
+        for pair in comparison:
+            ctr_name, exp_name = pair
+
+            results = []
+            for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
+                c = data['tables'][ctr_name].loc[data['tables'][ctr_name]['cellpair'] == cellpair, ['allpair', measure]]
+                e = data['tables'][exp_name].loc[data['tables'][exp_name]['cellpair'] == cellpair, ['allpair', measure]]
+
+                merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+                
+                stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+                
+                results.append({
+                    'cellpair': cellpair,
+                    'statistic': stat,
+                    'p_value': p_value
+                })
+
+            data['stats'][f'{exp_name}_x_{ctr_name}:MannU'] = pd.DataFrame(results)
+    
+    else:
+        c = data['tables']['CTR']
+        
+        for key, df in data['tables'].items():
+            if key != 'CTR':
+
+                results = []
+                for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
+                    c = data['tables']['CTR'].loc[data['tables']['CTR']['cellpair'] == cellpair, ['allpair', measure]]
+                    e = df.loc[df['cellpair'] == cellpair, ['allpair', measure]]
+
+                    merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+
+                    stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+
+                    results.append({
+                        'cellpair': cellpair,
+                        'statistic': stat,
+                        'p_value': p_value
+                    })
+
+                data['stats'][f'{key}_x_CTR:MannU'] = pd.DataFrame(results)
 
     return data

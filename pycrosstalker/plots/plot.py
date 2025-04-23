@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import seaborn as sns
-import plotly
+import plotly.colors as pc
 import plotly.graph_objects as go
 from plotnine import *
 from adjustText import adjust_text
 from gprofiler import GProfiler
+from sankeyflow import Sankey
 
 
 def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True,figsize=None):
@@ -440,7 +441,7 @@ def plot_sankey(lrobj_tbl, target = None, ligand_cluster = None, receptor_cluste
         print(f"Gene->{target} Not Found")
     
 
-def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
+def gen_sankey2(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
     """
     Helper function to the function plot_sankey()
 
@@ -549,6 +550,89 @@ def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
     
     fig.show(config={"responsive": True})
 
+def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
+    """
+    Helper function to the function plot_sankey()
+
+     Parameters
+    ----------
+    df :
+        Dataframe
+
+    cat_cols :
+        Columns interested in the sankey plot
+
+    value_cols :
+        Sankey plot generated using connections based on this value_cols
+
+    title :
+        Title of Sankey plot
+    
+    Returns
+    -------
+    Nothing (plots Sankey plot)
+
+    """
+
+    # df['source'] += 'S'
+    df['target'] += ' '
+    
+    labelList = []
+    for catCol in cat_cols:
+        labelListTemp =  list((df[catCol].values))
+        labelList = labelList + labelListTemp    
+        
+    for i in range(len(cat_cols)-1):
+        if i==0:
+            sourceTargetDf = df[[cat_cols[i],cat_cols[i+1],value_cols]]
+            sourceTargetDf.columns = ['source','target','count']
+        else:
+            tempDf = df[[cat_cols[i],cat_cols[i+1],value_cols]]
+            tempDf.columns = ['source','target','count']
+            sourceTargetDf = pd.concat([sourceTargetDf,tempDf])
+    
+    vmin = sourceTargetDf['count'].min()
+    vmax = sourceTargetDf['count'].max()
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    cmap = plt.get_cmap('RdBu_r')
+    sourceTargetDf['hex_color'] = sourceTargetDf['count'].apply(lambda x: mcolors.to_hex(cmap(norm(x))))
+    
+    flows = []
+    for i, row in sourceTargetDf.iterrows():
+        flows.append((row['source'], row['target'], 1, {'color': row['hex_color']}))
+
+    nodes = Sankey.infer_nodes(flows)
+    nodes_new = []
+    for level in nodes:
+        level_new = []
+        for node in level:
+            node_new = node + [{'color' : 'black',
+                                'label_pos':'center', 'label_opts': dict(fontsize=10, bbox=dict(boxstyle='round,pad=0.3', edgecolor='black', facecolor='white'))}]
+            level_new.append(node_new)
+        nodes_new.append(level_new)
+
+    # plt.figure(figsize=(15, 7), dpi=144)
+    fig, ax = plt.subplots(figsize=(15, 7))
+    s = Sankey(flows=flows,
+               nodes=nodes_new,
+               flow_color_mode_alpha=0.3,
+               node_opts=dict(label_format='{label}'),
+    )
+    s.draw(ax=ax)
+
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax, orientation='vertical', pad=0.01, shrink=0.5)
+    cbar.set_label(value_cols, fontsize=12)
+
+    ax.text(x=-0.05, y=1.02, s="Source", fontsize=10)
+    ax.text(x=0.95, y=1.02, s="Ligand", fontsize=10)
+    ax.text(x=1.95, y=1.02, s="Receptor", fontsize=10)
+    ax.text(x=2.95, y=1.02, s="Target", fontsize=10)
+
+    ax.set_title(title)
+    plt.tight_layout()
+    plt.show()
 
 def gene_annotation(gene_list_to_profile,
                     num_gos: int = 15,
