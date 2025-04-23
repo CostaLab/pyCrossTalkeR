@@ -611,8 +611,7 @@ def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
             level_new.append(node_new)
         nodes_new.append(level_new)
 
-    # plt.figure(figsize=(15, 7), dpi=144)
-    fig, ax = plt.subplots(figsize=(15, 7))
+    fig, ax = plt.subplots(figsize=(15, 10))
     s = Sankey(flows=flows,
                nodes=nodes_new,
                flow_color_mode_alpha=0.3,

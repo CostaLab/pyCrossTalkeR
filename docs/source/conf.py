@@ -36,7 +36,7 @@ templates_path = ['_templates']
 
 html_theme = 'sphinx_rtd_theme'
 
-sphinx_rtd_size_width = "70%"
+sphinx_rtd_size_width = "85%"
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'    
