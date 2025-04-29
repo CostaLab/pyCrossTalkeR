@@ -18,6 +18,36 @@ def analise_LR(lrpaths,
                 sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'], 
                 org='hsa', comparison=None, filtered_net=False):
     
+    """
+    Core engine to generate report. Here we perform all the computation related to pyCrossTalkeR
+
+    Parameters
+    ----------
+    lrpaths :
+        Paths of single condition LR data
+    genes :
+        list of genes to be considered in the sankey plots
+    out_path :
+        output directory path
+    sep :
+        character used on csv
+    threshold :
+        percentage of edges to be pruned
+    colors :
+        celltypes colorscheme
+    out_file :
+        output file names
+    output_fmt :
+        rmarkdown render output format parameter
+    sel_columns :
+        columns from data
+    
+    Returns
+    -------
+    Rmarkdown report all objects from each step
+    
+    """
+    
     data = read_lr_single_condition(lrpaths, 
                                     sel_columns, 
                                     out_path, 
@@ -27,6 +57,9 @@ def analise_LR(lrpaths,
     print("Create a Differential Table")
     if len(lrpaths) > 1:
         data = create_diff_table(data, out_path, comparison)
+        data = fisher_test_cci(data, 'LRScore', out_path, comparison)
+        data = mannwitu_test_cci(data, 'LRScore', out_path, comparison)
+        data = filtered_graphs(data, out_path)
 
     print("Calculating CCI Ranking")
     data = ranking(data, out_path, sel_columns=sel_columns, slot="graphs")

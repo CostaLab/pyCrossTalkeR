@@ -1,0 +1,6 @@
+"nodes","Listener","Influencer","Mediator","Pagerank"
+"Neural",0,1,0,0.03
+"Fibroblast",3,3,3,0.103616034495764
+"Myeloid",4,4,2,0.209555531655311
+"Megakaryocyte",3,3,0,0.208668947296981
+"MSC",5,4,3,0.448159486551944

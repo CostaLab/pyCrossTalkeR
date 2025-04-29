@@ -4,7 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import igraph
 import itertools
-from scipy.stats import fisher_exact
+from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu
 import pickle
 from itertools import combinations
 import os
@@ -25,7 +25,27 @@ import re
 #'@importFrom stats prcomp
 #'@NoRd
 
+
 def ranking(data, out_path, sel_columns, slot="graphs"):
+    """
+    Ranking the most interactive gene (ligand or receptor)
+
+    Parameters
+    ----------
+    data :
+        lrobject
+    out_path :
+        to save the lrobject with ranking
+    sel_columns :
+        columns to consider
+    slot :
+        slot of the networks graphs_ggi to gene cell interaction and abs
+    
+    Returns
+    -------
+    list
+    
+    """
 
     sc = StandardScaler()
     slot_data = data.get(slot, {})
@@ -139,6 +159,22 @@ def ranking(data, out_path, sel_columns, slot="graphs"):
 #'@NoRd
 
 def ranking_net(graph, mode=True):
+    """
+    Network Ranking method
+
+    Parameters
+    ----------
+    graph :
+        lrobject
+    mode :
+        is TRUE if is comparive mode
+    
+    Returns
+    -------
+    list
+    
+    """
+
     nodes = list(graph.nodes)
     
     if not mode:
@@ -199,6 +235,26 @@ def ranking_net(graph, mode=True):
 #'@NoRd
 
 def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
+    """
+    Ranking the most interactive gene (ligand or receptor)
+
+    Parameters
+    ----------
+    rankings :
+        tables lrobject
+    slotname :
+        slot of the networks graphs_ggi to gene cell interaction and abs
+    graphname :
+        graph comparison name
+    curr.rkg :
+        ranking table
+    
+    Returns
+    -------
+    list
+    
+    """
+    
     p_f1 = p_f2 = 0.5  # probability to be at disease
     allnodes = pd.DataFrame(curr_rkg['nodes'], columns=['nodes'])
     if '_filtered' in graphname:
@@ -263,33 +319,74 @@ def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
 #'@return list
 #'@NoRd
 
-
 def comparative_med(rankings, slotname, graphname, curr_rkg):
-    allnodes = curr_rkg['nodes']
-    curr = graphname.split('_x_')
-    p_ctr = curr[1]
-    q_exp = curr[0]
+    """
+    Delta betweenness the most interactive gene (ligand or receptor)
+
+    Parameters
+    ----------
+    rankings :
+        tables lrobject
+    slotname :
+        slot of the networks graphs_ggi to gene cell interaction and abs
+    graphname :
+        graph comparison name
+    curr.rkg :
+        ranking table
+    
+    Returns
+    -------
+    list
+    
+    """
+     
+    allnodes = pd.DataFrame(curr_rkg['nodes'], columns=['nodes'])
+    if '_filtered' in graphname:
+        curr = re.sub('_filtered', '', graphname)
+        curr = re.split('_x_', curr)
+        p_ctr = curr[1]
+        q_exp = curr[0]
+    else:
+        curr = re.split('_x_', graphname)
+        p_ctr = curr[1]
+        q_exp = curr[0]
 
    
     if "_ggi" in slotname:
-        p = rankings[p_ctr + '_ggi']['Mediator']
-        q = rankings[q_exp + '_ggi']['Mediator']
+        p = rankings[p_ctr + '_ggi'][['nodes', 'Mediator']]
+        q = rankings[q_exp + '_ggi'][['nodes', 'Mediator']]
     else:
-        p = rankings[p_ctr]['Mediator'][rankings[q_exp]['Mediator'].index]
-        q = rankings[q_exp]['Mediator']
-    
+        p = rankings[p_ctr][['nodes', 'Mediator']].loc[rankings[q_exp][['nodes', 'Mediator']].index]
+        q = rankings[q_exp][['nodes', 'Mediator']]
 
-    final = pd.DataFrame({'p.ctr': p, 'p.dis': q, 'names': allnodes})
-    final['p.ctr'] = final['p.ctr'].fillna(0)
-    final['p.dis'] = final['p.dis'].fillna(0)
-    curr_rkg['Mediator'] = final['p.dis'] - final['p.ctr']
+    p.columns = ['nodes', 'm_ctr']
+    q.columns = ['nodes', 'm_exp']
+
+    final = pd.merge(allnodes,p, on='nodes', how='left')
+    final = pd.merge(final, q, on='nodes', how='left')
+
+    final['m_ctr'] = final['m_ctr'].fillna(0)
+    final['m_exp'] = final['m_exp'].fillna(0)
+
+    curr_rkg['Mediator'] = final['m_exp'] - final['m_ctr']
     return curr_rkg
 
 
-
-
-
 def add_node_type(df):
+    """
+    Adding genetype to the gene names to distinguish biological function
+
+    Parameters
+    ----------
+    df :
+        dataframe with interaction data
+    
+    Returns
+    -------
+    df
+    
+    """
+
     df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|L" if row['type_gene_A'] == "Ligand" else row['gene_A'], axis=1)
     df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|R" if row['type_gene_A'] == "Receptor" else row['gene_A'], axis=1)
     df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|TF" if row['type_gene_A'] == "Transcription Factor" else row['gene_A'], axis=1)
@@ -299,3 +396,252 @@ def add_node_type(df):
     df['gene_B'] = df.apply(lambda row: f"{row['gene_B']}|TF" if row['type_gene_B'] == "Transcription Factor" else row['gene_B'], axis=1)
     
     return df
+
+
+def fisher_test_cci(data, measure, out_path, comparison=None):
+    """
+    Evaluate Differences in the edge proportion
+
+    Parameters
+    ----------
+    data :
+        data
+    measure :
+        intensity
+    out_path :
+        save path
+    
+    Returns
+    -------
+    data (lr_object) with fisher stats
+    
+    """
+
+    if comparison is not None:
+        for pair in comparison:
+            ctr_name = pair[1]
+            exp_name = pair[0]
+            
+            c = data['tables'][ctr_name].groupby('cellpair').size().reset_index(name='measure')
+            e = data['tables'][exp_name].groupby('cellpair').size().reset_index(name='measure')
+
+            joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
+            
+            pvals = []
+            measure_ctr_sum = joined['measure_ctr'].sum()
+            measure_exp_sum = joined['measure_exp'].sum()
+            for idx, row in joined.iterrows():
+                ctotal = joined['measure_ctr'].sum() - row['measure_ctr']
+                etotal = joined['measure_exp'].sum() - row['measure_exp']
+                matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+
+                n_resamples = 1000
+                np.random.seed(42)  # For reproducibility
+
+                matrix_data = np.hstack([
+                    np.repeat(0, matrix[0, 0]),
+                    np.repeat(1, matrix[0, 1]),
+                    np.repeat(2, matrix[1, 0]),
+                    np.repeat(3, matrix[1, 1]),
+                ])
+
+                bootstrap_p_values = []
+                for _ in range(n_resamples):
+                    resampled_data = np.random.choice(matrix_data, size=matrix_data.size, replace=True)
+                    resampled_table = np.array([
+                        [np.sum(resampled_data == 0), np.sum(resampled_data == 1)],
+                        [np.sum(resampled_data == 2), np.sum(resampled_data == 3)]
+                    ])
+                    _, p_value = fisher_exact(resampled_table)
+                    bootstrap_p_values.append(p_value)
+
+                # Estimate the empirical p-value
+                bootstrap_p_values = np.array(bootstrap_p_values)
+                empirical_p_value = np.mean(bootstrap_p_values <= p_value)
+
+                # Fisher's exact test
+                _, p_value_1 = fisher_exact(matrix)
+
+                # print(p_value_1)
+                # print(empirical_p_value)
+                
+                # Log odds ratio
+                odds_ratio = row['measure_exp'] / row['measure_ctr'] if row['measure_ctr'] != 0 else np.nan
+                lodds = np.log2(odds_ratio) if odds_ratio > 0 else np.nan
+                
+                pvals.append({
+                    'cellpair': row['cellpair'],
+                    'p_value': p_value_1,
+                    'lodds': lodds
+                })
+
+            pval_df = pd.DataFrame(pvals)
+            data['stats'][f'{exp_name}_x_{ctr_name}'] = pval_df
+
+        with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+            pickle.dump(data, f)
+
+        return data
+
+    else:
+        if len(data['tables']) >= 2:
+            c = data['tables']['CTR'].groupby('cellpair').size().reset_index(name='measure')
+
+            for i in range(1, len(data['tables'])):
+                if '_x_' not in list(data['tables'].keys())[i]:
+                    e = data['tables'][list(data['tables'].keys())[i]].groupby('cellpair').size().reset_index(name='measure')
+
+                    # Merge control and experimental data on 'cellpair'
+                    joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
+                    
+                    pvals = []
+                    measure_ctr_sum = joined['measure_ctr'].sum()
+                    measure_exp_sum = joined['measure_exp'].sum()
+                    for idx, row in joined.iterrows():
+                        ctotal = measure_ctr_sum - row['measure_ctr']
+                        etotal = measure_exp_sum - row['measure_exp']
+                        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+                        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
+    
+                        # Monte Carlo resampling (if B > 0)
+                        B = 1000
+                        np.random.seed(42)  # For reproducibility
+                        if B > 0:
+                            count = 0
+                            for _ in range(B):
+                                shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
+                                if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
+                                    count += 1
+                            perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
+                        else:
+                            perm_p_value = None
+
+                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
+
+                        pvals.append({
+                            'cellpair': row['cellpair'],
+                            'p_value': p_value,
+                            'lodds': lodds
+                        })
+
+                    pval_df = pd.DataFrame(pvals)
+                    data['stats'][f'{list(data["tables"].keys())[i]}_x_{list(data["tables"].keys())[0]}'] = pval_df
+
+            with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+                pickle.dump(data, f)
+
+            return data
+
+
+def filtered_graphs(data, out_path):
+    """
+    Filter comparison graphs by statistics
+
+    Parameters
+    ----------
+    data :
+        data
+    out_path :
+        save path
+    
+    Returns
+    -------
+    data (lr_object) with fisher comparison graphs
+    
+    """
+
+    temp = {}
+    for name, graph in data['graphs'].items():
+        if '_x_' in name:
+            h = [edge[0] for edge in graph.edges()]
+            f = [edge[1] for edge in graph.edges()]
+
+            stats = data['stats'][name]
+            
+            significant_edges = stats[stats['p_value'] <= 0.05]
+            
+            significant_edge_pairs = [
+                (h[i], f[i]) for i, edge_pair in enumerate(zip(h, f))
+                if f"{h[i]}@{f[i]}" in significant_edges['cellpair'].values
+            ]
+
+            filtered_graph = graph.edge_subgraph(significant_edge_pairs).copy()
+            temp[name] = filtered_graph
+
+    for name in temp:   
+        data['graphs'][f"{name}_filtered"] = temp[name]
+
+    with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+        pickle.dump(data, f)
+
+    return data
+
+
+def mannwitu_test_cci(data, measure, out_path, comparison=None):
+    """
+    Evaluate Differences in the edge strength
+
+    Parameters
+    ----------
+    data :
+        data
+    measure :
+        intensity
+    out_path :
+        save path
+    
+    Returns
+    -------
+    data (lr_object) with mannwittu stats
+    
+    """
+
+    lcellpair = {}
+    for key, df in data['tables'].items():
+        lcellpair[key] = df['cellpair'].unique()
+
+    if comparison:
+        for pair in comparison:
+            ctr_name, exp_name = pair
+
+            results = []
+            for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
+                c = data['tables'][ctr_name].loc[data['tables'][ctr_name]['cellpair'] == cellpair, ['allpair', measure]]
+                e = data['tables'][exp_name].loc[data['tables'][exp_name]['cellpair'] == cellpair, ['allpair', measure]]
+
+                merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+                
+                stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+                
+                results.append({
+                    'cellpair': cellpair,
+                    'statistic': stat,
+                    'p_value': p_value
+                })
+
+            data['stats'][f'{exp_name}_x_{ctr_name}:MannU'] = pd.DataFrame(results)
+    
+    else:
+        c = data['tables']['CTR']
+        
+        for key, df in data['tables'].items():
+            if key != 'CTR':
+
+                results = []
+                for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
+                    c = data['tables']['CTR'].loc[data['tables']['CTR']['cellpair'] == cellpair, ['allpair', measure]]
+                    e = df.loc[df['cellpair'] == cellpair, ['allpair', measure]]
+
+                    merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+
+                    stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+
+                    results.append({
+                        'cellpair': cellpair,
+                        'statistic': stat,
+                        'p_value': p_value
+                    })
+
+                data['stats'][f'{key}_x_CTR:MannU'] = pd.DataFrame(results)
+
+    return data

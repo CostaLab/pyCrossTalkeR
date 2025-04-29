@@ -7,6 +7,28 @@ import matplotlib.colors as mcolors
 from .utils import *
 
 def read_lr_single_condition(lrpaths, sel_columns, out_path="/tmp/", sep=",", colors=None):
+    """
+    This function loads the single conditions LR outputs and use it to generate the report data and it`s object It assumes that the table presents the following columns Ligand, Ligand.Cluster, Receptor,Receptor.Cluster and MeanLR/another measure
+
+    Parameters
+    ----------
+    lrpaths :
+        Named vector with the lrpaths of each output
+    sel_columns :
+        selected columns
+    out_path :
+        Path to deposit the results
+    sep :
+        character used to divide the columns on input file
+    colors :
+        colorlist
+    
+    Returns
+    -------
+    LRObject
+    
+    """
+
     data = {}
     graphs = {}
     graphs_ggi = {}

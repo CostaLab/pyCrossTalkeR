@@ -23,6 +23,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     "myst_parser",
     "nbsphinx", ## for jupyter notebook
+    "sphinx_rtd_size",
 ]
 
 intersphinx_mapping = {
@@ -35,6 +36,12 @@ templates_path = ['_templates']
 
 html_theme = 'sphinx_rtd_theme'
 
+sphinx_rtd_size_width = "85%"
+
 # -- Options for EPUB output
 epub_show_urls = 'footnote'    
 
+html_js_files = [
+    "require.min.js",
+    "custom.js",
+]

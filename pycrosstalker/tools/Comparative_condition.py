@@ -2,6 +2,22 @@ import pandas as pd
 import networkx as nx
 
 def create_diff_table(data, out_path, comparison=None):
+    """
+    Read the lrobject and generate the comparative tables
+
+    Parameters
+    ----------
+    data :
+        LRObj with single condition
+    out_path :
+        output path
+    
+    Returns
+    -------
+    LRObject
+    
+    """
+
     def process_pair(exp_table, ctr_table):
         tmp_data = pd.merge(exp_table, ctr_table, on='allpair', how='outer')
         tmp_data[['ligpair', 'recpair']] = tmp_data['allpair'].str.split('@', expand=True)
