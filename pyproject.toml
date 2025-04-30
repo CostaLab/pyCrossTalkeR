@@ -18,6 +18,10 @@ adjustText = "^1.2.0"
 scikit-learn = "^1.5.1"
 igraph = "^0.11.6"
 tqdm = "^4.66.5"
+attrs = "^25.3.0"
+plotly = "^6.0.1"
+sankeyflow = "^0.4.1"
+gprofiler-official = "1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
