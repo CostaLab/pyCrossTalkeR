@@ -290,6 +290,9 @@ matplotlib==3.9.2 ; python_version >= "3.10" and python_version < "4.0" \
 mizani==0.11.4 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:5b6271dc3da2c88694dca2e0e0a7e1879f0e2fb046c789776f54d090a5243735 \
     --hash=sha256:9fdb79e88602ca29132613b428d6c1e8af436e88e37d55a0f8eb99fe044c9bc2
+narwhals==1.37.1 ; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:1eb8f17ff00e6c471d5afb704e9068f41657234eb73bde2ee66ad975a170015b \
+    --hash=sha256:6f358a23b7351897d6efb45496dc0528918ce4ca6c8f9631594885cd873576a7
 networkx==3.3 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:0c127d8b2f4865f59ae9cb8aafcd60b5c70f3241ebd66f7defad7c4ab90126c9 \
     --hash=sha256:28575580c6ebdaf4505b22c6256a2b9de86b316dc63ba9e93abde3d78dfdbcf2
@@ -447,6 +450,9 @@ pillow==10.4.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:f7baece4ce06bade126fb84b8af1c33439a76d8a6fd818970215e0560ca28c27 \
     --hash=sha256:ff25afb18123cea58a591ea0244b92eb1e61a1fd497bf6d6384f09bc3262ec3e \
     --hash=sha256:ff337c552345e95702c5fde3158acb0625111017d0e5f24bf3acdb9cc16b90d1
+plotly==6.0.1 ; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:4714db20fea57a435692c548a4eb4fae454f7daddf15f8d8ba7e1045681d7768 \
+    --hash=sha256:dd8400229872b6e3c964b099be699f8d00c489a974f2cfccfad5e8240873366b
 plotnine==0.13.6 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:3c8c8f958c295345140230ea29803488f83aba9b5a8d0b1b2eb3eaefbf0a06b8 \
     --hash=sha256:4acc1af29fa4e91e726b67d49277e8368f62e1c817f01bf14ecd8ca5e83bfaea
