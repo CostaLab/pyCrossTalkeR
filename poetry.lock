@@ -311,22 +311,6 @@ unicode = ["unicodedata2 (>=15.1.0) ; python_version <= \"3.12\""]
 woff = ["brotli (>=1.0.1) ; platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; platform_python_implementation != \"CPython\"", "zopfli (>=0.1.4)"]
 
 [[package]]
-name = "gprofiler"
-version = "1.2.2"
-description = "Python port of the R wrapper for the g:Profiler functional enrichment tool."
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "gprofiler-1.2.2-py2.py3-none-any.whl", hash = "sha256:4a82cc9de9f64cd2abedfb1238cd8337e6d46e44f2d2ed8cdd08c0543a5d0936"},
-    {file = "gprofiler-1.2.2.tar.gz", hash = "sha256:1caa0966a1ac8ac37d10f2073bc5d13981d5b816a4c7ca7228ac7eefa28fb95f"},
-]
-
-[package.dependencies]
-pandas = "*"
-requests = "*"
-
-[[package]]
 name = "gprofiler-official"
 version = "1.0.0"
 description = "Functional enrichment analysis and more via the g:Profiler toolkit"
@@ -1300,4 +1284,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "370a277904a56eb140534daa274b1f2d3adff634a399ec4c139120d8d4ae364d"
+content-hash = "6f854499f88cec2b8ea7d678b74a811f218a8f04eab57babf9ce4c5e1e1187fb"
