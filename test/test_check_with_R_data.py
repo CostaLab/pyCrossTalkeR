@@ -4,16 +4,16 @@ import pickle
 import pandas as pd
 
 # Load data from pickle file
-with open("../output/LR_data.pkl", "rb") as f:
+with open("tutorials/output/LR_data.pkl", "rb") as f:
     data = pickle.load(f)
 
 print(f"\nTesting if data from pyCrossTalkeR is similar to data from CrossTalkeR")
 
 def test_check_table_data():
     # Load table data from R
-    data_R_CTR = pd.read_csv('R_data/table_CTR.csv')
-    data_R_EXP = pd.read_csv('R_data/table_EXP.csv')
-    data_R_EXP_x_CTR = pd.read_csv('R_data/table_EXP_x_CTR.csv')
+    data_R_CTR = pd.read_csv('test/R_data/table_CTR.csv')
+    data_R_EXP = pd.read_csv('test/R_data/table_EXP.csv')
+    data_R_EXP_x_CTR = pd.read_csv('test/R_data/table_EXP_x_CTR.csv')
 
     common_columns_CTR = data['tables']['CTR'].columns.intersection(data_R_CTR.columns)
     common_columns_EXP = data['tables']['EXP'].columns.intersection(data_R_EXP.columns)
@@ -37,7 +37,7 @@ def test_check_rankings_data():
     rankings_list = ['CTR', 'EXP', 'EXP_x_CTR', 'EXP_x_CTR_filtered', 'CTR_ggi', 'EXP_ggi', 'EXP_x_CTR_ggi']
     for ranking in rankings_list:
         # Load table data from R
-        ranking_R = pd.read_csv(f'R_data/ranking_{ranking}.csv')
+        ranking_R = pd.read_csv(f'test/R_data/ranking_{ranking}.csv')
         ranking_R = ranking_R.sort_values(by='nodes').reset_index(drop=True)
         
         ranking_py = data['rankings'][ranking].sort_values(by='nodes').reset_index(drop=True)
@@ -55,7 +55,7 @@ def test_check_graphs_data():
     graphs_list = ['CTR', 'EXP', 'EXP_x_CTR',  'EXP_x_CTR_filtered', 'CTR_ggi', 'EXP_ggi', 'EXP_x_CTR_ggi']
     for i, graph in enumerate(graphs_list):
         # Load table data from R
-        graph_R = pd.read_csv(f'R_data/graph_{graph}.csv')
+        graph_R = pd.read_csv(f'test/R_data/graph_{graph}.csv')
         graph_R_df = pd.DataFrame({
             "edge": graph_R['from'] + '-' + graph_R['to'],
             "LRScore": graph_R['LRScore'],
@@ -78,7 +78,7 @@ def test_check_graphs_data():
         print(f"{graph} graph data is similar")
 
 def test_check_stats_data():
-    stats_R = pd.read_csv('R_data/stat_EXP_x_CTR.csv')
+    stats_R = pd.read_csv('test/R_data/stat_EXP_x_CTR.csv')
     stats_R_df = pd.DataFrame({
         "cellpair": stats_R['columns_name'],
         "p_value": stats_R['p'],
@@ -96,7 +96,7 @@ def test_check_stats_data():
     print("\nEXP_x_CTR stats data is similar")
 
     for key in ['EXP', 'EXP_x_CTR']:
-        stats_mannu_R = pd.read_csv(f'R_data/stat_{key}_x_CTR:MannU.csv')
+        stats_mannu_R = pd.read_csv(f'test/R_data/stat_{key}_x_CTR:MannU.csv')
         stats_mannu_R_df = pd.DataFrame({
             "cellpair": stats_mannu_R['cellpair'],
             "p_value": stats_mannu_R['p'],
