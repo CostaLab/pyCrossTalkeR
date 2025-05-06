@@ -33,7 +33,7 @@ Ivan G. Costa<sup>1*</sup>
 You can install pyCrossTalkeR with the simple commands below:
 
 ```{python}
-pip install git+https://github.com/CostaLab/pyCrossTalkeR/
+pip install pycrosstalker
 ```
 
 *Note: Please avoid to use the following characters in celltype name: '$'*
@@ -51,7 +51,7 @@ libgeos-dev
 ```
   
 
-## Features v0.1.0
+## Features v1.0.0
 
 - Single and Comparative Reports
    - Cell Cell Interaction visualization

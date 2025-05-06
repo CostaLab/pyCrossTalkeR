@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "pycrosstalker"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
-authors = ["jsnagai <james.nagai@gmail.com>"]
+authors = ["ruthvik07 <ruthvik.koppala@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
