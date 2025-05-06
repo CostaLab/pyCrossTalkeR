@@ -3,6 +3,8 @@
 <img src="https://github.com/CostaLab/pyCrossTalkeR/blob/main/logo1.png" align="right" width="200" />
 
 James S. Nagai<sup>1</sup>,
+Vanessa Kloeker<sup>1</sup>,
+Ruthvik Koppala<sup>1</sup>,
 Nils B. Leimkühler<sup>2</sup>,
 Michael T. Schaub <sup>3</sup>,
 Rebekka K. Schneider<sup>4,5,6</sup>,
@@ -49,7 +51,7 @@ libgeos-dev
 ```
   
 
-## Features v0.0.1
+## Features v0.1.0
 
 - Single and Comparative Reports
    - Cell Cell Interaction visualization
