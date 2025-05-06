@@ -8,8 +8,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'pyCrossTalkeR'
-copyright = '2023, James S. Nagai'
-author = 'James S. Nagai'
+copyright = '2025, Ruthvik Koppala'
+author = 'Ruthvik Koppala'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
