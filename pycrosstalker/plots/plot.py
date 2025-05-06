@@ -593,7 +593,10 @@ def gen_sankey(df, cat_cols=[], value_cols='', title='Sankey Diagram'):
     
     vmin = sourceTargetDf['count'].min()
     vmax = sourceTargetDf['count'].max()
-    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    limit = max(abs(vmin), abs(vmax))
+    vcenter = 0
+    norm = mcolors.TwoSlopeNorm(vmin=-limit, vcenter=vcenter, vmax=limit)
+    # norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
     cmap = plt.get_cmap('RdBu_r')
     sourceTargetDf['hex_color'] = sourceTargetDf['count'].apply(lambda x: mcolors.to_hex(cmap(norm(x))))
     
