@@ -51,7 +51,7 @@ libgeos-dev
 ```
   
 
-## Features v0.2.0
+## Features v2.0.0
 
 
 - Single and Comparative Reports
