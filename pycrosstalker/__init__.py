@@ -1,5 +1,5 @@
-__version__ = "0.0.0.1"
-__author__ = 'James Nagai'
+__version__ = "1.0.1"
+__author__ = 'Ruthvik Koppala'
 __credits__ = 'Institute for Computational Genomics'
 
 import pycrosstalker.tools as tl

@@ -3,6 +3,8 @@
 <img src="https://github.com/CostaLab/pyCrossTalkeR/blob/main/logo1.png" align="right" width="200" />
 
 James S. Nagai<sup>1</sup>,
+Vanessa Kloeker<sup>1</sup>,
+Ruthvik Koppala<sup>1</sup>,
 Nils B. Leimkühler<sup>2</sup>,
 Michael T. Schaub <sup>3</sup>,
 Rebekka K. Schneider<sup>4,5,6</sup>,
@@ -31,7 +33,7 @@ Ivan G. Costa<sup>1*</sup>
 You can install pyCrossTalkeR with the simple commands below:
 
 ```{python}
-pip install git+https://github.com/CostaLab/pyCrossTalkeR/
+pip install pycrosstalker
 ```
 
 *Note: Please avoid to use the following characters in celltype name: '$'*
@@ -50,6 +52,7 @@ libgeos-dev
   
 
 ## Features v0.2.0
+
 
 - Single and Comparative Reports
    - Cell Cell Interaction visualization

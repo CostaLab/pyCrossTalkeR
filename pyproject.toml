@@ -2,7 +2,9 @@
 name = "pycrosstalker"
 version = "0.2.0"
 description = ""
-authors = ["jsnagai <james.nagai@gmail.com>"]
+authors = [
+    "ruthvik07 <ruthvik.koppala@gmail.com>",
+    "jsnagai <james.nagai@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
