@@ -1,32 +1,32 @@
-[tool.poetry]
+[project]
 name = "pycrosstalker"
 version = "2.0.0"
 description = ""
 authors = [
-    "ruthvik07 <ruthvik.koppala@gmail.com>",
-    "jsnagai <james.nagai@gmail.com>"]
-license = "MIT"
+    { name = "ruthvik07", email = "ruthvik.koppala@gmail.com" },
+    { name = "jsnagai", email = "james.nagai@gmail.com" }
+]
+license = { text = "MIT" }
 readme = "README.md"
+requires-python = ">=3.10"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pandas = "^2.2.2"
-numpy = "^1.24"
-matplotlib = "^3.9.1.post1"
-seaborn = "^0.13.2"
-networkx = "^3.3"
-plotnine = "^0.13.6"
-adjustText = "^1.2.0"
-scikit-learn = "^1.5.1"
-igraph = "^0.11.6"
-tqdm = "^4.66.5"
-attrs = "^25.3.0"
-plotly = "^6.0.1"
-sankeyflow = "^0.4.1"
-gprofiler-official = "1.0.0"
+dependencies = [
+    "pandas>=2.2.2",
+    "numpy>=1.24",
+    "matplotlib>=3.9.1.post1",
+    "seaborn>=0.13.2",
+    "networkx>=3.3",
+    "plotnine>=0.13.6",
+    "adjustText>=1.2.0",
+    "scikit-learn>=1.5.1",
+    "igraph>=0.11.6",
+    "tqdm>=4.66.5",
+    "attrs>=25.3.0",
+    "plotly>=6.0.1",
+    "sankeyflow>=0.4.1",
+    "gprofiler-official==1.0.0"
+]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-
