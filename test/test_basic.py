@@ -3,7 +3,7 @@ from pycrosstalker import plots as ctpl
 import pickle
 
 # Load data from pickle file
-with open("tutorials/output/LR_data.pkl", "rb") as f:
+with open("tutorials/output/Myelofibrosis_example/LR_data.pkl", "rb") as f:
     data = pickle.load(f)
 
 def test_data_type():

@@ -6,3 +6,4 @@ plotly
 sphinx-rtd-size
 gprofiler-official
 sankeyflow
+nbformat

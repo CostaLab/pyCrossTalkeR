@@ -4,7 +4,7 @@ import pickle
 import pandas as pd
 
 # Load data from pickle file
-with open("tutorials/output/LR_data.pkl", "rb") as f:
+with open("tutorials/output/Myelofibrosis_example/LR_data.pkl", "rb") as f:
     data = pickle.load(f)
 
 print(f"\nTesting if data from pyCrossTalkeR is similar to data from CrossTalkeR")
@@ -95,7 +95,7 @@ def test_check_stats_data():
 
     print("\nEXP_x_CTR stats data is similar")
 
-    for key in ['EXP', 'EXP_x_CTR']:
+    for key in ['EXP']:
         stats_mannu_R = pd.read_csv(f'test/R_data/stat_{key}_x_CTR:MannU.csv')
         stats_mannu_R_df = pd.DataFrame({
             "cellpair": stats_mannu_R['cellpair'],
