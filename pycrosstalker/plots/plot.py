@@ -13,7 +13,7 @@ from gprofiler import GProfiler
 from sankeyflow import Sankey
 
 
-def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True,figsize=None):
+def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10):
     """
     This function does a CCI plot
 
@@ -77,7 +77,7 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     else:
         coords_scale = coords
 
-    coords_scale = {key : (coords_scale[key][0] * 1.5, coords_scale[key][1] * 1.5) for key in coords_scale}
+    coords_scale = {key: (coords_scale[key][0] * scale_factor, coords_scale[key][1] * scale_factor) for key in coords_scale}
 
     # Calculate edge colors and alpha
     edge_colors = []
@@ -102,7 +102,7 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
         d['loop_angle'] = np.nan
 
     node_colors = [str(colors.get(node)) for node in graph.nodes()]
-    node_sizes = [size*500 for size in pg]
+    node_sizes = [size*1000*node_size for size in pg]
 
     # Plot the graph
     if figsize is None:
@@ -112,7 +112,7 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     nx.draw(graph, pos=coords_scale, edge_color=edge_colors, node_color=node_colors, node_size=node_sizes,
             width=[d['width'] for _, _, d in graph.edges(data=True)],
             arrows=True, arrowsize=30, arrowstyle='-|>',
-            connectionstyle='arc3,rad=0.3', with_labels=vnames)
+            connectionstyle='arc3,rad=0.3', with_labels=vnames, font_size=font_size)
     ax.set_xlim(-4, 4)
     ax.set_ylim(-4, 4)
 
@@ -304,20 +304,19 @@ def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None
     if '_x_' in table_name:
         rankings_table = data['rankings'][table_name]
 
-        if type != None:
+        if type is not None:
             if len(type) == 1:
-                rankings_table = rankings_table[rankings_table['nodes'].str.contains('\\|' + type)]
+                rankings_table = rankings_table[rankings_table['nodes'].str.contains(r'\|' + type)]
             elif len(type) == 2:
-                print(type)
                 if type == 'TF':
-                    rankings_table = rankings_table[rankings_table['nodes'].str.contains('\\|' + type)]
+                    rankings_table = rankings_table[rankings_table['nodes'].str.contains(r'\|' + type)]
                 else:
-                    rankings_table = rankings_table[rankings_table['nodes'].str.contains('\\|' + type + '|\\|' + type[::-1])]
+                    rankings_table = rankings_table[rankings_table['nodes'].str.contains(r'\|R|\|L')]
             elif len(type) == 3:
-                if type == 'RTF' or type == 'TFR':
-                    rankings_table = rankings_table[rankings_table['nodes'].str.contains('\\|' + 'RTF' + '|\\|' + 'TFR')]
-                elif type == 'LTF' or type == 'TFL':
-                    rankings_table = rankings_table[rankings_table['nodes'].str.contains('\\|' + 'LTF' + '|\\|' + 'TFL')]
+                if type in ['RTF', 'TFR']:
+                    rankings_table = rankings_table[rankings_table['nodes'].str.contains(r'\|R|\|TF')]
+                elif type in ['LTF', 'TFL']:
+                    rankings_table = rankings_table[rankings_table['nodes'].str.contains(r'\|L|\|TF')]
 
         rankings_table = rankings_table.sort_values(by=ranking)
         
@@ -433,7 +432,7 @@ def plot_sankey(lrobj_tbl, target = None, ligand_cluster = None, receptor_cluste
         cat_cols = ['source', 'gene_A', 'gene_B', 'target']
         value_cols = 'LRScore'
         data = data.loc[data['LRScore'].abs().nlargest(min(len(data), threshold)).index]
-        title = f'{target} ligand gene interactions EXP vs CTR'
+        title = plt_name
 
         gen_sankey(data, cat_cols, value_cols, title)
     
@@ -710,7 +709,7 @@ def gene_annotation(gene_list_to_profile,
     plt.show()
 
 
-def plot_volcane(df):
+def plot_volcane(df, method, p_threshold=0.05, fc_threshold=1, figsize=(8, 6), annot=True, title=None):
     """
     This function generates a Volcano plot
 
@@ -727,61 +726,122 @@ def plot_volcane(df):
     np.random.seed(42)
     data = df
     data['neg_log10_p_value'] = -np.log10(df['p_value'])
-    
-    p_threshold = 0.05
-    fc_threshold = 1
+    if method == "fisher":
+        attr = "lodds"
+    elif method == "mannwhitneyu":
+        attr = "lfc"
 
     data["color"] = "gray"
-    data.loc[(data["lodds"] > fc_threshold) & (data["p_value"] < p_threshold), "color"] = "red"
-    data.loc[(data["lodds"] < -fc_threshold) & (data["p_value"] < p_threshold), "color"] = "red"
-    data.loc[(data["lodds"] > -fc_threshold) & (data["lodds"] < fc_threshold) & (data["p_value"] < p_threshold), "color"] = "blue"
-    data.loc[(data["lodds"] < -fc_threshold) & (data["p_value"] > p_threshold), "color"] = "green"
-    data.loc[(data["lodds"] > fc_threshold) & (data["p_value"] > p_threshold), "color"] = "green"
+    data.loc[(data[attr] > fc_threshold) & (data["p_value"] < p_threshold), "color"] = "red"
+    data.loc[(data[attr] < -fc_threshold) & (data["p_value"] < p_threshold), "color"] = "red"
+    data.loc[(data[attr] > -fc_threshold) & (data[attr] < fc_threshold) & (data["p_value"] < p_threshold), "color"] = "blue"
+    data.loc[(data[attr] < -fc_threshold) & (data["p_value"] > p_threshold), "color"] = "green"
+    data.loc[(data[attr] > fc_threshold) & (data["p_value"] > p_threshold), "color"] = "green"
 
     # Plot
-    plt.figure(figsize=(8, 6))
-    sns.scatterplot(x="lodds", y="neg_log10_p_value", hue="color", palette={"gray": "gray", "red": "red", "blue": "blue", "green": "green"}, data=data, edgecolor=None, alpha=0.7)
+    plt.figure(figsize=figsize)
+    sns.scatterplot(x=attr, y="neg_log10_p_value", hue="color", palette={"gray": "gray", "red": "red", "blue": "blue", "green": "green"}, data=data, edgecolor=None, alpha=0.7)
 
     # Add significance threshold lines
-    plt.axhline(-np.log10(p_threshold), linestyle="--", color="black", linewidth=1)  # P-value threshold
-    plt.axvline(fc_threshold, linestyle="--", color="black", linewidth=1)  # Positive log2FC threshold
-    plt.axvline(-fc_threshold, linestyle="--", color="black", linewidth=1)  # Negative log2FC threshold
+    plt.axhline(-np.log10(p_threshold), linestyle="--", color="black", linewidth=1)
+    plt.axvline(fc_threshold, linestyle="--", color="black", linewidth=1)
+    plt.axvline(-fc_threshold, linestyle="--", color="black", linewidth=1)
 
-    for i, row in data.iterrows():
-        if row['color'] == 'red':
-            plt.text(row["lodds"], row["neg_log10_p_value"], row["cellpair"], fontsize=8, ha='right')
+    if annot:
+        for i, row in data.iterrows():
+            if row['color'] == 'red':
+                plt.text(row[attr], row["neg_log10_p_value"], row["cellpair"], fontsize=8, ha='right')
 
-    x_limit = max(abs(data["lodds"].min()), abs(data["lodds"].max()))
+    x_limit = max(abs(data[attr].min()), abs(data[attr].max()))
     plt.xlim(-x_limit-1, x_limit+1)
 
     plt.xlabel(r"Log$_{2}$ Fold Change")
     plt.ylabel(r"-Log$_{10}$(p-value)")
-    plt.title("Volcano Plot")
-    plt.legend([],[], frameon=False)  # Hide legend
+    plt.title(title)
+    plt.legend([],[], frameon=False)
     plt.show()
 
 
-def plot_clustermap(data, title):
-    # Create pivot table for Gene_A-Gene_B without aggregation
+def plot_clustermap(data, title, annot=True):
+    """
+    This function generates a Clustermap plot
+
+    Parameters
+    ----------
+    data :
+        Dataframe
+    title : str
+        Title of the plot
+    annot : bool
+        Whether to annotate the heatmap with values
+
+    Returns
+    -------
+    Python Cluster map
+
+    """
     pivot_table = data.groupby(["source", "target"])["LRScore"].sum().unstack().fillna(0)
     xlabel, ylabel = "Target Tissue", "Source Tissue"
-
-    # Plot heatmap
+    
     g = sns.clustermap(
         pivot_table,
         figsize=(9, 7),
-        annot=True,
+        annot=annot,
         linewidths=0.5,
-        method="ward",    # Clustering method (options: single, complete, average, ward)
-        metric="euclidean",  # Distance metric (options: euclidean, cityblock, cosine, etc.)
-        dendrogram_ratio=(0.2, 0.2),  # Adjust dendrogram size
-        cbar_pos=(0.02, 0.8, 0.03, 0.15)  # Adjust colorbar position
+        method="ward",
+        metric="euclidean",
+        dendrogram_ratio=(0.2, 0.2),
+        cbar_pos=(0.02, 0.8, 0.03, 0.15)
     )
 
-    # Set Labels
     g.ax_heatmap.set_xlabel(xlabel)
     g.ax_heatmap.set_ylabel(ylabel)
     plt.title(title, fontsize=14)
 
     plt.show()
 
+def plot_graph_clustermap(graph, weight="LRScore", title="Ligand-Receptor Heatmap", annot=True):
+    """
+    This function generates the graph adjacency matrix Heatmap
+
+    Parameters
+    ----------
+    data :
+        Dataframe
+    weight : str
+        The weight attribute to use for the adjacency matrix, default is "LRScore"
+    title : str
+        Title of the plot
+    annot : bool
+        Whether to annotate the heatmap with values
+
+    Returns
+    -------
+    Python Cluster map
+
+    """
+
+    nodes = list(graph.nodes)
+    adj_matrix = nx.to_pandas_adjacency(graph, nodelist=nodes, weight=weight).fillna(0).astype(float)
+    max_val = np.abs(adj_matrix.values).max()
+
+    g = sns.clustermap(
+        adj_matrix,
+        figsize=(9, 7),
+        cmap="RdBu_r",
+        linewidths=0.5,
+        center=0,
+        vmin=-max_val,
+        vmax=max_val,
+        annot=annot,
+        method="ward",
+        metric="euclidean",
+        dendrogram_ratio=(0.2, 0.2),
+        cbar_pos=(0.02, 0.8, 0.03, 0.15)
+    )
+
+    g.ax_heatmap.set_xlabel("Receptor Cluster")
+    g.ax_heatmap.set_ylabel("Ligand Cluster")
+    plt.title(title, fontsize=14)
+
+    plt.show()

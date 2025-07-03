@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler
 import igraph
 import itertools
 from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu
+from scipy.cluster.hierarchy import linkage, leaves_list
 import pickle
 from itertools import combinations
 import os
@@ -485,7 +486,8 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
 
     else:
         if len(data['tables']) >= 2:
-            c = data['tables']['CTR'].groupby('cellpair').size().reset_index(name='measure')
+            c_key = list(data['tables'].keys())[0]
+            c = data['tables'][c_key].groupby('cellpair').size().reset_index(name='measure')
 
             for i in range(1, len(data['tables'])):
                 if '_x_' not in list(data['tables'].keys())[i]:
@@ -577,7 +579,7 @@ def filtered_graphs(data, out_path):
     return data
 
 
-def mannwitu_test_cci(data, measure, out_path, comparison=None):
+def mannwhitneyu_test_cci(data, measure, out_path, comparison=None):
     """
     Evaluate Differences in the edge strength
 
@@ -622,26 +624,46 @@ def mannwitu_test_cci(data, measure, out_path, comparison=None):
             data['stats'][f'{exp_name}_x_{ctr_name}:MannU'] = pd.DataFrame(results)
     
     else:
-        c = data['tables']['CTR']
+        c_key = list(data['tables'].keys())[0]
+        c = data['tables'][c_key]
         
         for key, df in data['tables'].items():
-            if key != 'CTR':
+            if key != c_key and "_x_" not in key:
 
                 results = []
                 for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
-                    c = data['tables']['CTR'].loc[data['tables']['CTR']['cellpair'] == cellpair, ['allpair', measure]]
+                    c = data['tables'][c_key].loc[data['tables'][c_key]['cellpair'] == cellpair, ['allpair', measure]]
                     e = df.loc[df['cellpair'] == cellpair, ['allpair', measure]]
 
                     merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
 
                     stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+                    eps = 1e-6
+                    lfc = np.log2((merged[measure + '_y'].mean() + eps) / (merged[measure + '_x'].mean() + eps)) if merged[measure + '_x'].mean() > 0 else np.nan
 
                     results.append({
                         'cellpair': cellpair,
                         'statistic': stat,
-                        'p_value': p_value
+                        'p_value': p_value,
+                        'lfc': lfc
                     })
 
-                data['stats'][f'{key}_x_CTR:MannU'] = pd.DataFrame(results)
+                data['stats'][f'{key}_x_{c_key}:MannU'] = pd.DataFrame(results)
 
     return data
+
+def get_clustered_node_order(graph, weight="LRScore"):
+    adj_df = nx.to_pandas_adjacency(graph, weight=weight).fillna(0)
+    Z = linkage(adj_df.values, method="ward", metric="euclidean")
+    row_order = leaves_list(Z)
+    ordered_nodes = adj_df.index[row_order].tolist()
+    return ordered_nodes
+
+def create_ordered_circular_layout(ordered_nodes):
+    n = len(ordered_nodes)
+    angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    layout = {
+        node: (np.cos(angle), np.sin(angle))
+        for node, angle in zip(ordered_nodes, angles)
+    }
+    return layout

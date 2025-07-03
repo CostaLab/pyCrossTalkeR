@@ -52,7 +52,7 @@ libgeos-dev
 ```
 
 
-## Features v0.0.1
+## Features v0.2.0
 
 - Single and Comparative Reports
    - Cell Cell Interaction visualization
@@ -78,7 +78,8 @@ libgeos-dev
 caption: Getting Started
 maxdepth: 2
 ---
-pyCrossTalkeR
+Human_Myelofibrosis
+Human_Myocardial_Infarction
 ```
 
 
