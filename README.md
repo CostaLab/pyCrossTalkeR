@@ -49,7 +49,7 @@ libgeos-dev
 ```
   
 
-## Features v0.0.1
+## Features v0.2.0
 
 - Single and Comparative Reports
    - Cell Cell Interaction visualization
