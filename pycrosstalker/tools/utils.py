@@ -11,6 +11,7 @@ from itertools import combinations
 import os
 import networkx as nx
 import re
+import json
 
 #'Ranking the most interactive gene (ligand or receptor)
 #'
@@ -27,14 +28,14 @@ import re
 #'@NoRd
 
 
-def ranking(data, out_path, sel_columns, slot="graphs"):
+def ranking(annData, out_path, sel_columns, slot="graphs"):
     """
     Ranking the most interactive gene (ligand or receptor)
 
     Parameters
     ----------
-    data :
-        lrobject
+    annData :
+        AnnData object
     out_path :
         to save the lrobject with ranking
     sel_columns :
@@ -47,6 +48,7 @@ def ranking(data, out_path, sel_columns, slot="graphs"):
     list
     
     """
+    data = annData.uns['pycrosstalker']['results']
 
     sc = StandardScaler()
     slot_data = data.get(slot, {})
@@ -55,6 +57,11 @@ def ranking(data, out_path, sel_columns, slot="graphs"):
     stats_data = data.get('stats', {})
     model = PCA(n_components= 2)
     for graph_name, graph in slot_data.items():
+        graph = nx.from_pandas_edgelist(graph,
+                                        source='source',
+                                        target='target',
+                                        edge_attr=True,
+                                        create_using=nx.DiGraph())
         if "_x_" in graph_name:  # Signed Analysis
             components = list(nx.connected_components(graph.to_undirected()))
             all_both = None
@@ -133,10 +140,11 @@ def ranking(data, out_path, sel_columns, slot="graphs"):
     data['pca'] = pca_data
     data['stats'] = stats_data
 
-    with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
-        pickle.dump(data, f)
+    # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+    #     pickle.dump(data, f)
+    annData.uns['pycrosstalker']['results'] = data
     
-    return data
+    return annData
 
 
 
@@ -399,14 +407,14 @@ def add_node_type(df):
     return df
 
 
-def fisher_test_cci(data, measure, out_path, comparison=None):
+def fisher_test_cci(annData, measure, out_path, comparison=None):
     """
     Evaluate Differences in the edge proportion
 
     Parameters
     ----------
-    data :
-        data
+    annData :
+        AnnData object
     measure :
         intensity
     out_path :
@@ -417,6 +425,7 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
     data (lr_object) with fisher stats
     
     """
+    data = annData.uns['pycrosstalker']['results']
 
     if comparison is not None:
         for pair in comparison:
@@ -436,53 +445,37 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
                 etotal = joined['measure_exp'].sum() - row['measure_exp']
                 matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
 
-                n_resamples = 1000
+                odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
+    
+                # Monte Carlo resampling (if B > 0)
+                B = 1000
                 np.random.seed(42)  # For reproducibility
+                if B > 0:
+                    count = 0
+                    for _ in range(B):
+                        shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
+                        if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
+                            count += 1
+                    perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
+                else:
+                    perm_p_value = None
 
-                matrix_data = np.hstack([
-                    np.repeat(0, matrix[0, 0]),
-                    np.repeat(1, matrix[0, 1]),
-                    np.repeat(2, matrix[1, 0]),
-                    np.repeat(3, matrix[1, 1]),
-                ])
+                lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
 
-                bootstrap_p_values = []
-                for _ in range(n_resamples):
-                    resampled_data = np.random.choice(matrix_data, size=matrix_data.size, replace=True)
-                    resampled_table = np.array([
-                        [np.sum(resampled_data == 0), np.sum(resampled_data == 1)],
-                        [np.sum(resampled_data == 2), np.sum(resampled_data == 3)]
-                    ])
-                    _, p_value = fisher_exact(resampled_table)
-                    bootstrap_p_values.append(p_value)
-
-                # Estimate the empirical p-value
-                bootstrap_p_values = np.array(bootstrap_p_values)
-                empirical_p_value = np.mean(bootstrap_p_values <= p_value)
-
-                # Fisher's exact test
-                _, p_value_1 = fisher_exact(matrix)
-
-                # print(p_value_1)
-                # print(empirical_p_value)
-                
-                # Log odds ratio
-                odds_ratio = row['measure_exp'] / row['measure_ctr'] if row['measure_ctr'] != 0 else np.nan
-                lodds = np.log2(odds_ratio) if odds_ratio > 0 else np.nan
-                
                 pvals.append({
                     'cellpair': row['cellpair'],
-                    'p_value': p_value_1,
+                    'p_value': p_value,
                     'lodds': lodds
                 })
 
             pval_df = pd.DataFrame(pvals)
             data['stats'][f'{exp_name}_x_{ctr_name}'] = pval_df
 
-        with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
-            pickle.dump(data, f)
+        # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+        #     pickle.dump(data, f)
+        annData.uns['pycrosstalker']['results'] = data
 
-        return data
+        return annData
 
     else:
         if len(data['tables']) >= 2:
@@ -529,20 +522,37 @@ def fisher_test_cci(data, measure, out_path, comparison=None):
                     pval_df = pd.DataFrame(pvals)
                     data['stats'][f'{list(data["tables"].keys())[i]}_x_{list(data["tables"].keys())[0]}'] = pval_df
 
-            with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
-                pickle.dump(data, f)
+            # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+            #     pickle.dump(annData.uns['pycrosstalker']['result'], f)
+            annData.uns['pycrosstalker']['results'] = data
+            return annData
 
-            return data
+def graph_from_storable_json(s):
+    import json
+    d = json.loads(s)
+    return nx.node_link_graph(d, edges="edges")
 
 
-def filtered_graphs(data, out_path):
+def graph_to_storable_json(G):
+            d = nx.node_link_data(G, edges="edges")
+            # Convert node IDs to strings
+            d["nodes"] = [{**node, "id": str(node["id"])} for node in d["nodes"]]
+            # Convert edge attributes to plain Python scalars
+            for edge in d["edges"]:
+                for k, v in edge.items():
+                    if isinstance(v, (np.generic,)):
+                        edge[k] = v.item()
+            # Serialize whole graph dict as JSON string
+            return json.dumps(d)
+
+def filtered_graphs(annData, out_path):
     """
     Filter comparison graphs by statistics
 
     Parameters
     ----------
-    data :
-        data
+    annData :
+        AnnData object
     out_path :
         save path
     
@@ -551,9 +561,14 @@ def filtered_graphs(data, out_path):
     data (lr_object) with fisher comparison graphs
     
     """
-
+    data = annData.uns['pycrosstalker']['results']
     temp = {}
     for name, graph in data['graphs'].items():
+        graph = nx.from_pandas_edgelist(graph,
+                                        source='source',
+                                        target='target',
+                                        edge_attr=True,
+                                        create_using=nx.DiGraph())
         if '_x_' in name:
             h = [edge[0] for edge in graph.edges()]
             f = [edge[1] for edge in graph.edges()]
@@ -571,22 +586,23 @@ def filtered_graphs(data, out_path):
             temp[name] = filtered_graph
 
     for name in temp:   
-        data['graphs'][f"{name}_filtered"] = temp[name]
+        data['graphs'][f"{name}_filtered"] = nx.to_pandas_edgelist(temp[name])
 
-    with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
-        pickle.dump(data, f)
+    # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
+    #     pickle.dump(data, f)
+    annData.uns['pycrosstalker']['results'] = data
 
-    return data
+    return annData
 
 
-def mannwhitneyu_test_cci(data, measure, out_path, comparison=None):
+def mannwhitneyu_test_cci(annData, measure, out_path, comparison=None):
     """
     Evaluate Differences in the edge strength
 
     Parameters
     ----------
-    data :
-        data
+    annData :
+        AnnData object
     measure :
         intensity
     out_path :
@@ -599,6 +615,7 @@ def mannwhitneyu_test_cci(data, measure, out_path, comparison=None):
     """
 
     lcellpair = {}
+    data = annData.uns['pycrosstalker']['results']
     for key, df in data['tables'].items():
         lcellpair[key] = df['cellpair'].unique()
 
@@ -614,11 +631,14 @@ def mannwhitneyu_test_cci(data, measure, out_path, comparison=None):
                 merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
                 
                 stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
-                
+                eps = 1e-6
+                lfc = np.log2((merged[measure + '_y'].mean() + eps) / (merged[measure + '_x'].mean() + eps)) if merged[measure + '_x'].mean() > 0 else np.nan
+
                 results.append({
                     'cellpair': cellpair,
                     'statistic': stat,
-                    'p_value': p_value
+                    'p_value': p_value,
+                    'lfc': lfc
                 })
 
             data['stats'][f'{exp_name}_x_{ctr_name}:MannU'] = pd.DataFrame(results)
@@ -635,24 +655,31 @@ def mannwhitneyu_test_cci(data, measure, out_path, comparison=None):
                     c = data['tables'][c_key].loc[data['tables'][c_key]['cellpair'] == cellpair, ['allpair', measure]]
                     e = df.loc[df['cellpair'] == cellpair, ['allpair', measure]]
 
-                    merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+                    #merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+                    merged = pd.merge(c, e, on='allpair', how='inner')
+                    if len(merged) > 0:
+                        stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+                        eps = 1e-6
+                        lfc = np.log2((merged[measure + '_y'].mean() + eps) / (merged[measure + '_x'].mean() + eps)) if merged[measure + '_x'].mean() > 0 else np.nan
 
-                    stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
-                    eps = 1e-6
-                    lfc = np.log2((merged[measure + '_y'].mean() + eps) / (merged[measure + '_x'].mean() + eps)) if merged[measure + '_x'].mean() > 0 else np.nan
-
-                    results.append({
-                        'cellpair': cellpair,
-                        'statistic': stat,
-                        'p_value': p_value,
-                        'lfc': lfc
-                    })
+                        results.append({
+                            'cellpair': cellpair,
+                            'statistic': stat,
+                            'p_value': p_value,
+                            'lfc': lfc
+                        })
 
                 data['stats'][f'{key}_x_{c_key}:MannU'] = pd.DataFrame(results)
+    annData.uns['pycrosstalker']['results'] = data
 
-    return data
+    return annData
 
 def get_clustered_node_order(graph, weight="LRScore"):
+    graph = nx.from_pandas_edgelist(graph,
+                                    source='source',
+                                    target='target',
+                                    edge_attr=True,
+                                    create_using=nx.DiGraph())
     adj_df = nx.to_pandas_adjacency(graph, weight=weight).fillna(0)
     Z = linkage(adj_df.values, method="ward", metric="euclidean")
     row_order = leaves_list(Z)
