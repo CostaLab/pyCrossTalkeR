@@ -8,7 +8,7 @@ authors = [
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 dependencies = [
     "pandas>=2.2.2",
@@ -24,7 +24,8 @@ dependencies = [
     "attrs>=25.3.0",
     "plotly>=6.0.1",
     "sankeyflow>=0.4.1",
-    "gprofiler-official==1.0.0"
+    "gprofiler-official==1.0.0",
+    "anndata (>=0.12.2,<0.13.0)"
 ]
 
 [build-system]
