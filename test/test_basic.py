@@ -1,16 +1,15 @@
-from pycrosstalker import tools as cttl
-from pycrosstalker import plots as ctpl
-import pickle
+import scanpy as sc
+from anndata import AnnData 
 
-# Load data from pickle file
-with open("tutorials/output/Myelofibrosis_example/LR_data.pkl", "rb") as f:
-    data = pickle.load(f)
+# Load data from AnnData file
+with open("tutorials/output/Myelofibrosis_example/Myelofibrosis_example_analysed.h5ad", "rb") as f:
+    adata = sc.read_h5ad(f)
 
 def test_data_type():
-    print("\nTesting data type is dict")
-    assert isinstance(data, dict)
+    print("\nTesting data type is AnnData")
+    assert isinstance(adata, AnnData)
 
 def test_data_keys():
-    print("Testing data keys")
+    print("Testing AnnData attributes exit")
     keys = {'graphs', 'graphs_ggi', 'tables', 'colors', 'coords', 'rankings', 'pca', 'stats'}
-    assert keys.issubset(data.keys())
+    assert keys.issubset(adata.uns['pycrosstalker']['results'].keys())
