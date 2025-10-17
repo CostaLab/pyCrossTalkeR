@@ -4,16 +4,17 @@ import networkx as nx
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from anndata import AnnData
 from .utils import *
 
-def read_lr_single_condition(lrpaths, sel_columns, out_path="/tmp/", sep=",", colors=None):
+def read_lr_single_condition(input, sel_columns, out_path="/tmp/", sep=",", colors=None):
     """
     This function loads the single conditions LR outputs and use it to generate the report data and it`s object It assumes that the table presents the following columns Ligand, Ligand.Cluster, Receptor,Receptor.Cluster and MeanLR/another measure
 
     Parameters
     ----------
-    lrpaths :
-        Named vector with the lrpaths of each output
+    input :
+        Named vector with the lrpaths of each output or an AnnData object
     sel_columns :
         selected columns
     out_path :
@@ -28,21 +29,27 @@ def read_lr_single_condition(lrpaths, sel_columns, out_path="/tmp/", sep=",", co
     LRObject
     
     """
+    if isinstance(input, dict):
+        annData = AnnData(uns = {'pycrosstalker': {'path': {}}})
+        for cond, lrpath in input.items():
+            # Reading data
+            if isinstance(lrpath, str):
+                data1 = pd.read_csv(lrpath, sep=sep)
+                annData.uns['pycrosstalker']['path'][cond] = data1
+            else:
+                raise ValueError("Issue with input paths, please check!")
+    elif isinstance(input, AnnData):
+        annData = input
+    else:
+        raise ValueError("Input parameter must be either a file path or an AnnData object")
 
     data = {}
     graphs = {}
     graphs_ggi = {}
     unif_celltypes = []
 
-    for cond, lrpath in lrpaths.items():
-        # Reading data
-        if isinstance(lrpath, str):
-            data1 = pd.read_csv(lrpath, sep=sep)    
-        elif isinstance(lrpath, pd.DataFrame):
-            data1 = lrpath.copy()
-        else:
-            raise ValueError("lrpath must be either a file path or a DataFrame")
-        
+    for cond in annData.uns['pycrosstalker']['path'].keys():
+        data1 = annData.uns['pycrosstalker']['path'][cond]
         if not (data1['gene_A'].str.contains(r'\|').sum() > 0):
             data1 = add_node_type(data1)
         
@@ -97,8 +104,8 @@ def read_lr_single_condition(lrpaths, sel_columns, out_path="/tmp/", sep=",", co
                             inter=row['LRScore'])  # Add thickness (inter)
 
         data[cond] = data1
-        graphs[cond] = graph1
-        graphs_ggi[cond] = graph2
+        graphs[cond] = nx.to_pandas_edgelist(graph1)
+        graphs_ggi[cond] = nx.to_pandas_edgelist(graph2)
 
     # Create a full graph
     template = nx.complete_graph(len(set(unif_celltypes)))
@@ -119,4 +126,5 @@ def read_lr_single_condition(lrpaths, sel_columns, out_path="/tmp/", sep=",", co
           "pca" : {},
           "stats" : {}} 
 
-    return lr
+    annData.uns['pycrosstalker']['results'] = lr
+    return annData

@@ -1,3 +1,5 @@
 test/test_check_with_R_data.py
 rawdata/snRNAseq_cellsWithSubtype.h5ad
 docs/source/notebooks/rawdata/snRNAseq_cellsWithSubtype.h5ad
+docs/source/notebooks/output/HMI_example/Human_Myocardial_Infarction_analysed.h5ad
+tutorials/output/HMI_example/Human_Myocardial_Infarction_analysed.h5ad

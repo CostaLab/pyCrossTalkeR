@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 
-def create_diff_table(data, out_path, comparison=None):
+def create_diff_table(annData, out_path, comparison=None):
     """
     Read the lrobject and generate the comparative tables
 
@@ -56,8 +56,11 @@ def create_diff_table(data, out_path, comparison=None):
         freq = (raw_inter - raw_inter.min()) / (raw_inter.max() - raw_inter.min()) + 0.1
         final['freq'] = freq.values
         final['pair'] = final['cellpair']
+        final_data = final_data.drop(final_data.filter(regex='(_x|_y)$').columns, axis=1)
         
         return final_data, final
+    
+    data = annData.uns['pycrosstalker']['results']
 
     if comparison is not None:
         for pair in comparison:
@@ -71,13 +74,13 @@ def create_diff_table(data, out_path, comparison=None):
             for _, row in final.iterrows():
                 G.add_edge(row['u'], row['v'], LRScore=row['LRScore'], freq=row['freq'], weight=row['LRScore'], inter=row['freq'])
             
-            data['graphs'][cmp_name] = G
+            data['graphs'][cmp_name] = nx.to_pandas_edgelist(G)
             
             G_ggi = nx.DiGraph()
             for _, row in final_data.iterrows():
                 G_ggi.add_edge(row['ligpair'], row['recpair'], LRScore=row['LRScore'], weight=row['LRScore'], inter=row['LRScore'])
             
-            data['graphs_ggi'][cmp_name] = G_ggi
+            data['graphs_ggi'][cmp_name] = nx.to_pandas_edgelist(G_ggi)
     else:
         ctr_name = list(data['tables'].keys())[0]
         ctr_table = data['tables'][ctr_name]
@@ -91,12 +94,13 @@ def create_diff_table(data, out_path, comparison=None):
             for _, row in final.iterrows():
                 G.add_edge(row['u'], row['v'], LRScore=row['LRScore'], freq=row['freq'], weight=row['LRScore'], inter=row['freq'])
             
-            data['graphs'][cmp_name] = G
+            data['graphs'][cmp_name] = nx.to_pandas_edgelist(G)
             
             G_ggi = nx.DiGraph()
             for _, row in final_data.iterrows():
                 G_ggi.add_edge(row['ligpair'], row['recpair'], LRScore=row['LRScore'], weight=row['LRScore'], inter=row['LRScore'])
             
-            data['graphs_ggi'][cmp_name] = G_ggi
+            data['graphs_ggi'][cmp_name] = nx.to_pandas_edgelist(G_ggi)
     
-    return data
+    annData.uns['pycrosstalker']['results'] = data
+    return annData

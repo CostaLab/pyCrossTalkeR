@@ -54,7 +54,7 @@ libgeos-dev
 ```
 
 
-## Features v2.0.0
+## Features v2.1.0
 
 
 - Single and Comparative Reports
@@ -64,6 +64,7 @@ libgeos-dev
       - All measures and PC table
       - PC1 and PC2 based barplot
    - LR pair visualization plot can be done
+   - Store analysis results directly in AnnData and export to `.h5ad`
 
 
 # References

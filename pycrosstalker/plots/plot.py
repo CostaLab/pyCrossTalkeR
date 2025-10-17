@@ -11,6 +11,7 @@ from plotnine import *
 from adjustText import adjust_text
 from gprofiler import GProfiler
 from sankeyflow import Sankey
+import json
 
 
 def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10):
@@ -53,6 +54,11 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     Python default plot
     
     """
+    graph = nx.from_pandas_edgelist(graph,
+                                    source='source',
+                                    target='target',
+                                    edge_attr=True,
+                                    create_using=nx.DiGraph())
 
     # Check Maximal Weight
     if emax is None:
@@ -274,14 +280,14 @@ def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi
         return pca_plot
     
 
-def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None, mode = "cci", top_num = 10):
+def plot_bar_rankings(annData, table_name, ranking, type = None, filter_sign = None, mode = "cci", top_num = 10):
     """
     This function generates the barplot for a given network ranking on the CGI level. Further, the genes can be filtered by selected gene types to filter the plot.
 
     Parameters
     ----------
-    data_object :
-        LRobject with all data
+    annData :
+        AnnData object with all data
 
     table_name :
         name of the ranking table
@@ -302,7 +308,7 @@ def plot_bar_rankings(data, table_name, ranking, type = None, filter_sign = None
     """
 
     if '_x_' in table_name:
-        rankings_table = data['rankings'][table_name]
+        rankings_table = annData.uns['pycrosstalker']['results']['rankings'][table_name]
 
         if type is not None:
             if len(type) == 1:
@@ -820,6 +826,11 @@ def plot_graph_clustermap(graph, weight="LRScore", title="Ligand-Receptor Heatma
     Python Cluster map
 
     """
+    graph = nx.from_pandas_edgelist(graph,
+                                    source='source',
+                                    target='target',
+                                    edge_attr=True,
+                                    create_using=nx.DiGraph())
 
     nodes = list(graph.nodes)
     adj_matrix = nx.to_pandas_adjacency(graph, nodelist=nodes, weight=weight).fillna(0).astype(float)
