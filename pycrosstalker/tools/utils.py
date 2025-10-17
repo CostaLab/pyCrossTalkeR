@@ -628,18 +628,19 @@ def mannwhitneyu_test_cci(annData, measure, out_path, comparison=None):
                 c = data['tables'][ctr_name].loc[data['tables'][ctr_name]['cellpair'] == cellpair, ['allpair', measure]]
                 e = data['tables'][exp_name].loc[data['tables'][exp_name]['cellpair'] == cellpair, ['allpair', measure]]
 
-                merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
-                
-                stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
-                eps = 1e-6
-                lfc = np.log2((merged[measure + '_y'].mean() + eps) / (merged[measure + '_x'].mean() + eps)) if merged[measure + '_x'].mean() > 0 else np.nan
+                #merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
+                merged = pd.merge(c, e, on='allpair', how='inner')
+                if len(merged) > 0:
+                    stat, p_value = mannwhitneyu(merged[measure + '_x'], merged[measure + '_y'], alternative='two-sided')
+                    eps = 1e-6
+                    lfc = np.log2((merged[measure + '_y'].mean() + eps) / (merged[measure + '_x'].mean() + eps)) if merged[measure + '_x'].mean() > 0 else np.nan
 
-                results.append({
-                    'cellpair': cellpair,
-                    'statistic': stat,
-                    'p_value': p_value,
-                    'lfc': lfc
-                })
+                    results.append({
+                        'cellpair': cellpair,
+                        'statistic': stat,
+                        'p_value': p_value,
+                        'lfc': lfc
+                    })
 
             data['stats'][f'{exp_name}_x_{ctr_name}:MannU'] = pd.DataFrame(results)
     
