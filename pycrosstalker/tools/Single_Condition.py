@@ -114,7 +114,7 @@ def read_lr_single_condition(input, sel_columns, out_path="/tmp/", sep=",", colo
     coords = {node: c[i] for i, node in enumerate(sorted(set(unif_celltypes), key=lambda x: x.lower()), start=0)}
 
     if colors is None:
-        matplot_colors = plt.cm.get_cmap('Paired', len(set(unif_celltypes)))
+        matplot_colors = plt.get_cmap('Paired', len(set(unif_celltypes)))
         colors = {node: mcolors.to_hex(matplot_colors(i)) for i, node in enumerate(sorted(set(unif_celltypes), key=lambda x: x.lower()), start=0)}
 
     lr = {"graphs": graphs,

@@ -2,12 +2,23 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 import networkx as nx
+from pycrosstalker import tools as cttl
+from pycrosstalker import plots as ctpl
 
 # Load data from AnnData file
-with open("tutorials/output/Myelofibrosis_example/Myelofibrosis_example_analysed.h5ad", "rb") as f:
+with open("rawdata/humanBM.h5ad", "rb") as f:
+    paths = {
+        'CTR': "rawdata/CTR_LR.csv",
+        'EXP': "rawdata/EXP_LR.csv"
+    }
     adata = sc.read_h5ad(f)
+    adata.uns['pycrosstalker']={}
+    adata.uns['pycrosstalker']['path'] = {}
+    for k,v in paths.items():
+        adata.uns['pycrosstalker']['path'][k] = pd.read_csv(v)
+    adata = cttl.analise_LR(adata, org="hsa", save=False)
     data = adata.uns['pycrosstalker']['results']
-
+    
 print(f"\nTesting if data from pyCrossTalkeR is similar to data from CrossTalkeR")
 
 def test_check_table_data():
