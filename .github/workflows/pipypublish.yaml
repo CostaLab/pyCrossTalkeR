@@ -30,4 +30,4 @@ jobs:
         run: poetry config pypi-token.pypi $pypi_token
 
       - name: Build and publish
-        run: poetry publish --build
+        run: yes | poetry publish --build
