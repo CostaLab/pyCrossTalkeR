@@ -436,7 +436,7 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
             e = data['tables'][exp_name].groupby('cellpair').size().reset_index(name='measure')
 
             joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
-            
+            joined.fillna(0, inplace=True)
             pvals = []
             measure_ctr_sum = joined['measure_ctr'].sum()
             measure_exp_sum = joined['measure_exp'].sum()
@@ -488,7 +488,7 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
 
                     # Merge control and experimental data on 'cellpair'
                     joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
-                    
+                    joined.fillna(0, inplace=True)
                     pvals = []
                     measure_ctr_sum = joined['measure_ctr'].sum()
                     measure_exp_sum = joined['measure_exp'].sum()

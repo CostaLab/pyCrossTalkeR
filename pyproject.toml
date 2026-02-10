@@ -32,3 +32,7 @@ dependencies = [
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "scriv[toml] (>=1.8.0,<2.0.0)"
+]

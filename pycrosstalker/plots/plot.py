@@ -136,8 +136,6 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
         legend2 = ax.legend(e_wid_sp, title='Percentage of \nthe interactions', title_fontsize='small', loc='upper left', bbox_to_anchor=(0.8, 0.4))
 
     ax.add_artist(legend1)
-    ax.add_artist(legend2)
-    
     ax.set_title(plt_name)
     # Show the plot
     plt.tight_layout()
