@@ -17,7 +17,7 @@ def analise_LR(input,
                 out_file=None, 
                 output_fmt="html_document", 
                 sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'], 
-                org='hsa', comparison=None, filtered_net=False, filename=None,save=True):
+                comparison=None, filtered_net=False, filename=None,save=True):
     
     """
     Core engine to generate report. Here we perform all the computation related to pyCrossTalkeR

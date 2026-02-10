@@ -9,7 +9,8 @@ from .utils import *
 
 def read_lr_single_condition(input, sel_columns, out_path="/tmp/", sep=",", colors=None):
     """
-    This function loads the single conditions LR outputs and use it to generate the report data and it`s object It assumes that the table presents the following columns Ligand, Ligand.Cluster, Receptor,Receptor.Cluster and MeanLR/another measure
+    This function loads the single conditions LR outputs and use it to generate the report data and it`s object. 
+    It assumes that the table presents the following columns Ligand, Ligand.Cluster, Receptor,Receptor.Cluster and MeanLR/another measure
 
     Parameters
     ----------

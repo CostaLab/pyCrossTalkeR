@@ -16,7 +16,7 @@ with open("rawdata/humanBM.h5ad", "rb") as f:
     adata.uns['pycrosstalker']['path'] = {}
     for k,v in paths.items():
         adata.uns['pycrosstalker']['path'][k] = pd.read_csv(v)
-    adata = cttl.analise_LR(adata, org="hsa", save=False)
+    adata = cttl.analise_LR(adata, save=False)
     data = adata.uns['pycrosstalker']['results']
     
 print(f"\nTesting if data from pyCrossTalkeR is similar to data from CrossTalkeR")
