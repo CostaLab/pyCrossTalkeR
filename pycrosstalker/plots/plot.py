@@ -127,13 +127,13 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
         min_pg, max_pg = min(pg), max(pg)
         legend1 = ax.legend(loc='lower left', title="Pagerank",
                 handles=[plt.Line2D([], [], linestyle='', marker='o', markersize=v / vfactor, markerfacecolor='black', markeredgecolor='none') for v in [min_pg, (min_pg + max_pg) / 2, max_pg]],
-                labels=[round(min_pg, 2), round((min_pg + max_pg) / 2, 2), round(max_pg, 2)],  bbox_to_anchor=(0.8, 0))
+                labels=[round(min_pg, 2), round((min_pg + max_pg) / 2, 2), round(max_pg, 2)], bbox_to_anchor=(0.95, 0.3))
 
     # Thickness legend
     non_zero_inter_edges = [d['inter'] for _, _, d in graph.edges(data=True) if d.get('inter', 0) != 0]
     if non_zero_inter_edges:
         e_wid_sp = [round(min(non_zero_inter_edges), 2), round(min(non_zero_inter_edges) + (emax / 2), 2), round(emax, 2)]
-        legend2 = ax.legend(e_wid_sp, title='Percentage of \nthe interactions', title_fontsize='small', loc='upper left', bbox_to_anchor=(0.8, 0.4))
+        legend2 = ax.legend(e_wid_sp, title='Percentage of \nthe interactions', title_fontsize='small', loc='upper left', bbox_to_anchor=(0.95, 0.7))
 
     ax.add_artist(legend1)
     ax.set_title(plt_name)
