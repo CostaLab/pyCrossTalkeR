@@ -14,7 +14,7 @@ from sankeyflow import Sankey
 import json
 
 
-def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10):
+def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10,return_figure=False):
     """
     This function does a CCI plot
 
@@ -37,17 +37,21 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     high :
         Higher threshould which will be filtered. Edges within the interval [low\,high] are filtered.
     ignore_alpha :
-        not include transparency on the plot
+        Not include transparency on the plot edges
     log :
-        logscale the interactions
+        Logscale the interactions
     efactor :
-        edge scale factor
+        Edge scale factor
     vfactor :
-        edge scale factor
+        Certex scale factor
     vnames :
-        remove vertex labels
+        Remove vertex labels
     pg :
-        pagerank values
+        Pagerank values
+    figsize:
+        Set matplotlib figsize
+    return_figure:
+        Option for return matplotlib figure axes
 
     Returns
     -------
@@ -140,6 +144,8 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     # Show the plot
     plt.tight_layout()
     plt.show()
+    if return_figure:
+        return (fig,ax)
 
 
 def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi=True, include_tf=False, gene_types="all"):
@@ -766,7 +772,7 @@ def plot_volcane(df, method, p_threshold=0.05, fc_threshold=1, figsize=(8, 6), a
     plt.show()
 
 
-def plot_clustermap(data, title, annot=True):
+def plot_clustermap(data, title, annot=True, return_figure=False):
     """
     This function generates a Clustermap plot
 
@@ -778,15 +784,16 @@ def plot_clustermap(data, title, annot=True):
         Title of the plot
     annot : bool
         Whether to annotate the heatmap with values
-
+    return_figure:
+        Option for return matplotlib figure axes
     Returns
     -------
+    
     Python Cluster map
 
     """
     pivot_table = data.groupby(["source", "target"])["LRScore"].sum().unstack().fillna(0)
-    xlabel, ylabel = "Target Tissue", "Source Tissue"
-    
+    xlabel, ylabel = "Target", "Source"
     g = sns.clustermap(
         pivot_table,
         figsize=(9, 7),
@@ -797,12 +804,11 @@ def plot_clustermap(data, title, annot=True):
         dendrogram_ratio=(0.2, 0.2),
         cbar_pos=(0.02, 0.8, 0.03, 0.15)
     )
-
     g.ax_heatmap.set_xlabel(xlabel)
     g.ax_heatmap.set_ylabel(ylabel)
     plt.title(title, fontsize=14)
-
     plt.show()
+
 
 def plot_graph_clustermap(graph, weight="LRScore", title="Ligand-Receptor Heatmap", annot=True):
     """

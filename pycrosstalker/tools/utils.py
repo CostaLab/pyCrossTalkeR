@@ -578,9 +578,9 @@ def filtered_graphs(annData, out_path):
                 (h[i], f[i]) for i, edge_pair in enumerate(zip(h, f))
                 if f"{h[i]}@{f[i]}" in significant_edges['cellpair'].values
             ]
-
-            filtered_graph = graph.edge_subgraph(significant_edge_pairs).copy()
-            temp[name] = filtered_graph
+            if len(significant_edge_pairs) > 0:
+                filtered_graph = graph.edge_subgraph(significant_edge_pairs).copy()
+                temp[name] = filtered_graph
 
     for name in temp:   
         data['graphs'][f"{name}_filtered"] = nx.to_pandas_edgelist(temp[name])
@@ -692,3 +692,32 @@ def create_ordered_circular_layout(ordered_nodes):
         for node, angle in zip(ordered_nodes, angles)
     }
     return layout
+
+
+def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellphone_pvals",compute_means=False,pval_filter=True):
+    adata.uns['pycrosstalker'] = {}
+    adata.uns['pycrosstalker']['path'] = {}
+    sel = ['ligand','receptor_complex','source','target',pval_key, score_key]
+    if compute_means:
+        sel.remove(score_key)
+        sel.extend(['ligand_means','receptor_means'])
+    if not pval_filter:
+        sel.remove(pval_key)
+    for i in adata.uns[liana_key]:
+        evfull = adata.uns[liana_key][i]
+        evfull = evfull.loc[:,sel]
+        evfull['type_gene_A'] = 'Ligand'
+        evfull['type_gene_B'] = 'Receptor'
+        evfull['gene_A'] = evfull['ligand']
+        evfull['gene_B'] = evfull['receptor_complex']
+        if not compute_means:
+            evfull['MeanLR'] = evfull[score_key]
+        else:
+            evfull['MeanLR'] = gmean(evfull.loc[:,['ligand_means','receptor_means']],axis=1)
+        k = i[0:i.find('_lr_')]
+        if pval_filter:
+            evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
+        evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
+        adata.uns['pycrosstalker']['path'][i] = evfull
+    return (adata.copy())
+

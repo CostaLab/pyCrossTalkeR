@@ -1,5 +1,9 @@
 import scanpy as sc
 from anndata import AnnData 
+import importlib
+
+def test_import_package():
+    importlib.import_module("pycrosstalker")
 
 # Load data from AnnData file
 with open("tutorials/output/Myelofibrosis_example/Myelofibrosis_example_analysed.h5ad", "rb") as f:
