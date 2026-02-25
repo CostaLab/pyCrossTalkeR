@@ -4,7 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import igraph
 import itertools
-from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu
+from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu, gmean
 from scipy.cluster.hierarchy import linkage, leaves_list
 import pickle
 from itertools import combinations
