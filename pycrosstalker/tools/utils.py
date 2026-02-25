@@ -280,11 +280,8 @@ def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
     if "_ggi" in slotname:
         p = rankings[p_ctr + '_ggi'][['nodes','Pagerank']]
         q = rankings[q_exp + '_ggi'][['nodes','Pagerank']]
-
-        
-
     else:
-        p = rankings[p_ctr][['nodes', 'Pagerank']].loc[rankings[q_exp]['Pagerank'].index]
+        p = rankings[p_ctr][['nodes', 'Pagerank']]
         q = rankings[q_exp][['nodes', 'Pagerank']]
 
     
@@ -365,7 +362,7 @@ def comparative_med(rankings, slotname, graphname, curr_rkg):
         p = rankings[p_ctr + '_ggi'][['nodes', 'Mediator']]
         q = rankings[q_exp + '_ggi'][['nodes', 'Mediator']]
     else:
-        p = rankings[p_ctr][['nodes', 'Mediator']].loc[rankings[q_exp][['nodes', 'Mediator']].index]
+        p = rankings[p_ctr][['nodes', 'Mediator']]
         q = rankings[q_exp][['nodes', 'Mediator']]
 
     p.columns = ['nodes', 'm_ctr']

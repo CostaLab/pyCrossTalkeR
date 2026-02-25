@@ -1,6 +1,6 @@
 [project]
 name = "pycrosstalker"
-version = "2.1.1"
+version = "2.1.2"
 description = ""
 authors = [
     { name = "ruthvik07", email = "ruthvik.koppala@gmail.com" },
