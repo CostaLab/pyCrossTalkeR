@@ -111,19 +111,53 @@ def test_check_stats_data():
 
     print("\nEXP_x_CTR stats data is similar")
 
-    # TO DO: Fix mannwhitneyu test comparison, R version still user outjoin
-    # for key in ['EXP']:
-    #     stats_mannu_R = pd.read_csv(f'test/R_data/stat_{key}_x_CTR:MannU.csv')
-    #     stats_mannu_R_df = pd.DataFrame({
-    #         "cellpair": stats_mannu_R['cellpair'],
-    #         "p_value": stats_mannu_R['p'],
-    #     })
-    #     stats_mannu_R_df = stats_mannu_R_df.sort_values(by='cellpair').reset_index(drop=True)
 
-    #     stats_mannu_py = data['stats'][f'{key}_x_CTR:MannU']
-    #     stats_mannu_py_df = stats_mannu_py.sort_values(by='cellpair').reset_index(drop=True)
+def test_single_condition():
+    with open("rawdata/humanBM.h5ad", "rb") as f:
+        paths = {
+            'CTR': "rawdata/CTR_LR.csv",
+        }
+        adata = sc.read_h5ad(f)
+        adata.uns['pycrosstalker']={}
+        adata.uns['pycrosstalker']['path'] = {}
+        for k,v in paths.items():
+            adata.uns['pycrosstalker']['path'][k] = pd.read_csv(v)
+        tmp = cttl.read_lr_single_condition(adata,
+                                            sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'])
+    assert list(tmp.uns['pycrosstalker']['results']['graphs'].keys())==["CTR"]
 
-    #     assert stats_mannu_py_df['cellpair'].equals(stats_mannu_R_df['cellpair'])
-    #     assert (abs(stats_mannu_py_df['p_value'] - stats_mannu_R_df['p_value']) < 0.01).all()
+def test_comparative_condition():
+    with open("rawdata/humanBM.h5ad", "rb") as f:
+        paths = {
+            'CTR': "rawdata/CTR_LR.csv",
+            'EXP': "rawdata/EXP_LR.csv"
+        }
+        adata = sc.read_h5ad(f)
+        adata.uns['pycrosstalker']={}
+        adata.uns['pycrosstalker']['path'] = {}
+        for k,v in paths.items():
+            adata.uns['pycrosstalker']['path'][k] = pd.read_csv(v)
+        tmp = cttl.read_lr_single_condition(adata,
+                                            sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'])
+        print("Create a Differential Table")
+        if len(tmp.uns['pycrosstalker']['path']) > 1:
+            tmp = cttl.create_diff_table(tmp, "./", comparison=None)
+    assert len(tmp.uns['pycrosstalker']['path']) > 1
+    assert "EXP_x_CTR" in tmp.uns['pycrosstalker']['results']['graphs'].keys()
 
-    #     print(f"{key}_x_CTR:MannU stats data is similar")
+# TO DO: Fix mannwhitneyu test comparison, R version still user outjoin
+# for key in ['EXP']:
+#     stats_mannu_R = pd.read_csv(f'test/R_data/stat_{key}_x_CTR:MannU.csv')
+#     stats_mannu_R_df = pd.DataFrame({
+#         "cellpair": stats_mannu_R['cellpair'],
+#         "p_value": stats_mannu_R['p'],
+#     })
+#     stats_mannu_R_df = stats_mannu_R_df.sort_values(by='cellpair').reset_index(drop=True)
+
+#     stats_mannu_py = data['stats'][f'{key}_x_CTR:MannU']
+#     stats_mannu_py_df = stats_mannu_py.sort_values(by='cellpair').reset_index(drop=True)
+
+#     assert stats_mannu_py_df['cellpair'].equals(stats_mannu_R_df['cellpair'])
+#     assert (abs(stats_mannu_py_df['p_value'] - stats_mannu_R_df['p_value']) < 0.01).all()
+
+#     print(f"{key}_x_CTR:MannU stats data is similar")

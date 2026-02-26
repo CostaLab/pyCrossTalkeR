@@ -700,24 +700,43 @@ def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellph
     sel = ['ligand','receptor_complex','source','target',pval_key, score_key]
     if compute_means:
         sel.remove(score_key)
-        sel.extend(['ligand_means','receptor_means'])
+        sel.append('ligand_means')
+        sel.append('receptor_means')
     if not pval_filter:
         sel.remove(pval_key)
-    for i in adata.uns[liana_key]:
-        evfull = adata.uns[liana_key][i]
-        evfull = evfull.loc[:,sel]
-        evfull['type_gene_A'] = 'Ligand'
-        evfull['type_gene_B'] = 'Receptor'
-        evfull['gene_A'] = evfull['ligand']
-        evfull['gene_B'] = evfull['receptor_complex']
-        if not compute_means:
-            evfull['MeanLR'] = evfull[score_key]
-        else:
-            evfull['MeanLR'] = gmean(evfull.loc[:,['ligand_means','receptor_means']],axis=1)
-        k = i[0:i.find('_lr_')]
-        if pval_filter:
-            evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
-        evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
-        adata.uns['pycrosstalker']['path'][i] = evfull
+    if "label" in adata.uns[liana_key].columns:
+        for i in adata.uns[liana_key].label.unique():
+            evfull = adata.uns[liana_key].loc[adata.uns[liana_key].label==i,:]
+            evfull = evfull.loc[:,sel]
+            evfull['type_gene_A'] = 'Ligand'
+            evfull['type_gene_B'] = 'Receptor'
+            evfull['gene_A'] = evfull['ligand']
+            evfull['gene_B'] = evfull['receptor_complex']
+            if not compute_means:
+                evfull['MeanLR'] = evfull[score_key]
+            else:
+                evfull['MeanLR'] = gmean(evfull.loc[:,['ligand_means','receptor_means']],axis=1)
+            k = i[0:i.find('_lr_')]
+            if pval_filter:
+                evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
+            evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
+            adata.uns['pycrosstalker']['path'][i] = evfull
+    else:
+        for i in adata.uns[liana_key]:
+            evfull = adata.uns[liana_key][i]
+            evfull = evfull.loc[:,sel]
+            evfull['type_gene_A'] = 'Ligand'
+            evfull['type_gene_B'] = 'Receptor'
+            evfull['gene_A'] = evfull['ligand']
+            evfull['gene_B'] = evfull['receptor_complex']
+            if not compute_means:
+                evfull['MeanLR'] = evfull[score_key]
+            else:
+                evfull['MeanLR'] = gmean(evfull.loc[:,['ligand_means','receptor_means']],axis=1)
+            k = i[0:i.find('_lr_')]
+            if pval_filter:
+                evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
+            evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
+            adata.uns['pycrosstalker']['path'][i] = evfull
     return (adata.copy())
 

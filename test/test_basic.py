@@ -17,3 +17,5 @@ def test_data_keys():
     print("Testing AnnData attributes exit")
     keys = {'graphs', 'graphs_ggi', 'tables', 'colors', 'coords', 'rankings', 'pca', 'stats'}
     assert keys.issubset(adata.uns['pycrosstalker']['results'].keys())
+
+
