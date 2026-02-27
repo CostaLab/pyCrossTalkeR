@@ -3,7 +3,6 @@ import scanpy as sc
 from anndata import AnnData
 import networkx as nx
 from pycrosstalker import tools as cttl
-from pycrosstalker import plots as ctpl
 
 # Load data from AnnData file
 with open("rawdata/humanBM.h5ad", "rb") as f:
@@ -20,6 +19,7 @@ with open("rawdata/humanBM.h5ad", "rb") as f:
     data = adata.uns['pycrosstalker']['results']
     
 print(f"\nTesting if data from pyCrossTalkeR is similar to data from CrossTalkeR")
+
 
 def test_check_table_data():
     # Load table data from R
@@ -44,6 +44,7 @@ def test_check_table_data():
     assert df1_sorted.equals(df2_sorted)
     print("EXP_x_CTR table data is similar")
 
+
 def test_check_rankings_data():
     print("\n")
     rankings_list = ['CTR', 'EXP', 'EXP_x_CTR', 'EXP_x_CTR_filtered', 'CTR_ggi', 'EXP_ggi', 'EXP_x_CTR_ggi']
@@ -61,6 +62,7 @@ def test_check_rankings_data():
         assert ranking_py['Mediator'].equals(ranking_R['Mediator'])
         assert (abs(ranking_py['Pagerank'] - ranking_R['Pagerank']) < 0.01).all()
         print(f"{ranking} ranking data is similar")
+
 
 def test_check_graphs_data():
     print("\n")
@@ -93,6 +95,7 @@ def test_check_graphs_data():
 
         print(f"{graph} graph data is similar")
 
+
 def test_check_stats_data():
     stats_R = pd.read_csv('test/R_data/stat_EXP_x_CTR.csv')
     stats_R_df = pd.DataFrame({
@@ -122,9 +125,11 @@ def test_single_condition():
         adata.uns['pycrosstalker']['path'] = {}
         for k,v in paths.items():
             adata.uns['pycrosstalker']['path'][k] = pd.read_csv(v)
+        selcol = ['source', 'target', 'gene_A', 'gene_B', 'type_gene_A', 'type_gene_B', 'MeanLR']
         tmp = cttl.read_lr_single_condition(adata,
-                                            sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'])
-    assert list(tmp.uns['pycrosstalker']['results']['graphs'].keys())==["CTR"]
+                                            sel_columns=selcol)
+    assert list(tmp.uns['pycrosstalker']['results']['graphs'].keys()) == ["CTR"]
+
 
 def test_comparative_condition():
     with open("rawdata/humanBM.h5ad", "rb") as f:
@@ -133,12 +138,13 @@ def test_comparative_condition():
             'EXP': "rawdata/EXP_LR.csv"
         }
         adata = sc.read_h5ad(f)
-        adata.uns['pycrosstalker']={}
+        adata.uns['pycrosstalker'] = {}
         adata.uns['pycrosstalker']['path'] = {}
-        for k,v in paths.items():
+        for k, v in paths.items():
             adata.uns['pycrosstalker']['path'][k] = pd.read_csv(v)
+        selcol = ['source', 'target', 'gene_A', 'gene_B', 'type_gene_A', 'type_gene_B', 'MeanLR']
         tmp = cttl.read_lr_single_condition(adata,
-                                            sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'])
+                                            sel_columns=selcol)
         print("Create a Differential Table")
         if len(tmp.uns['pycrosstalker']['path']) > 1:
             tmp = cttl.create_diff_table(tmp, "./", comparison=None)
