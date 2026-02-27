@@ -3,3 +3,6 @@ rawdata/snRNAseq_cellsWithSubtype.h5ad
 docs/source/notebooks/rawdata/snRNAseq_cellsWithSubtype.h5ad
 docs/source/notebooks/output/HMI_example/Human_Myocardial_Infarction_analysed.h5ad
 tutorials/output/HMI_example/Human_Myocardial_Infarction_analysed.h5ad
+__pycache__/
+*.pyc
+*.pyo
