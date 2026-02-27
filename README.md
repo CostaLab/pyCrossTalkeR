@@ -24,6 +24,16 @@ Ivan G. Costa<sup>1*</sup>
 
 ![Alt text](image.png)
 
+<!-- Python versions supported -->
+[![Python Versions](https://img.shields.io/pypi/pyversions/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+
+<!-- Monthly downloads -->
+[![Downloads](https://img.shields.io/pypi/dm/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+
+<!-- License -->
+[![License](https://img.shields.io/pypi/l/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+
+
 **Motivation:** Ligand-receptor (LR) analysis allows the characterization of cellular crosstalk from single cell RNA-seq data. However, current LR methods provide limited approaches for prioritization of cell types, ligands or receptors or characterizing changes in crosstalk between two biological conditions.
 
 **Results:** pyCrossTalkeR is a framework for network analysis and visualisation of LR networks. pyCrossTalkeR identifies relevant ligands, receptors and cell types contributing to changes in cell communication when contrasting two biological states: disease vs. homeostasis. A case study on scRNA-seq of human myeloproliferative neoplasms reinforces the strengths of pyCrossTalkeR for characterisation of changes in cellular crosstalk in disease state.
