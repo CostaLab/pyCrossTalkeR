@@ -26,12 +26,9 @@ Ivan G. Costa<sup>1*</sup>
 
 <!-- Python versions supported -->
 [![Python Versions](https://img.shields.io/pypi/pyversions/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-
-<!-- Monthly downloads -->
 [![Downloads](https://img.shields.io/pypi/dm/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-
-<!-- License -->
 [![License](https://img.shields.io/pypi/l/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+[![PyPI version](https://img.shields.io/pypi/v/pycrosstalker)](https://pypi.org/project/YOUR-PACKAGE-NAME/)
 
 
 **Motivation:** Ligand-receptor (LR) analysis allows the characterization of cellular crosstalk from single cell RNA-seq data. However, current LR methods provide limited approaches for prioritization of cell types, ligands or receptors or characterizing changes in crosstalk between two biological conditions.
