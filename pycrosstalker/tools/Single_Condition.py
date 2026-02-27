@@ -86,23 +86,23 @@ def read_lr_single_condition(input, sel_columns, out_path="/tmp/", sep=",", colo
         final['freq'] = freq
 
         # Convert to NetworkX
-        graph1 = nx.DiGraph()
-        for index, row in final.iterrows():
-            graph1.add_edge(row['u'], 
-                            row['v'], 
-                            LRScore=row['LRScore'], 
-                            freq=row['freq'], 
-                            weight=row['LRScore'], 
-                            inter=row['freq'])  # Add thickness (inter)
+        final['weight'] = final['LRScore']
+        final['inter'] = final['freq']
+        graph1 = nx.from_pandas_edgelist(
+            final, source='u', target='v',
+            edge_attr=['LRScore', 'freq', 'weight', 'inter'],
+            create_using=nx.DiGraph()
+        )
 
-        graph2 = nx.DiGraph()
-        for index, row in data1.iterrows():
-            graph2.add_edge(row['ligpair'], 
-                            row['recpair'], 
-                            LRScore=row['LRScore'], 
-                            mean=row['LRScore'], 
-                            weight=row['LRScore'], 
-                            inter=row['LRScore'])  # Add thickness (inter)
+        data1_ggi = data1[['ligpair', 'recpair', 'LRScore']].copy()
+        data1_ggi['mean'] = data1_ggi['LRScore']
+        data1_ggi['weight'] = data1_ggi['LRScore']
+        data1_ggi['inter'] = data1_ggi['LRScore']
+        graph2 = nx.from_pandas_edgelist(
+            data1_ggi, source='ligpair', target='recpair',
+            edge_attr=['LRScore', 'mean', 'weight', 'inter'],
+            create_using=nx.DiGraph()
+        )
 
         data[cond] = data1
         graphs[cond] = nx.to_pandas_edgelist(graph1)

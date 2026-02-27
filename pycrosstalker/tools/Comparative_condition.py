@@ -70,16 +70,23 @@ def create_diff_table(annData, out_path, comparison=None):
             final_data, final = process_pair(exp_table, ctr_table)
             data['tables'][cmp_name] = final_data
             
-            G = nx.DiGraph()
-            for _, row in final.iterrows():
-                G.add_edge(row['u'], row['v'], LRScore=row['LRScore'], freq=row['freq'], weight=row['LRScore'], inter=row['freq'])
-            
+            final['weight'] = final['LRScore']
+            final['inter'] = final['freq']
+            G = nx.from_pandas_edgelist(
+                final, source='u', target='v',
+                edge_attr=['LRScore', 'freq', 'weight', 'inter'],
+                create_using=nx.DiGraph()
+            )
             data['graphs'][cmp_name] = nx.to_pandas_edgelist(G)
             
-            G_ggi = nx.DiGraph()
-            for _, row in final_data.iterrows():
-                G_ggi.add_edge(row['ligpair'], row['recpair'], LRScore=row['LRScore'], weight=row['LRScore'], inter=row['LRScore'])
-            
+            ggi_data = final_data[['ligpair', 'recpair', 'LRScore']].copy()
+            ggi_data['weight'] = ggi_data['LRScore']
+            ggi_data['inter'] = ggi_data['LRScore']
+            G_ggi = nx.from_pandas_edgelist(
+                ggi_data, source='ligpair', target='recpair',
+                edge_attr=['LRScore', 'weight', 'inter'],
+                create_using=nx.DiGraph()
+            )
             data['graphs_ggi'][cmp_name] = nx.to_pandas_edgelist(G_ggi)
     else:
         ctr_name = list(data['tables'].keys())[0]
@@ -90,16 +97,23 @@ def create_diff_table(annData, out_path, comparison=None):
             final_data, final = process_pair(exp_table, ctr_table)
             data['tables'][cmp_name] = final_data
             
-            G = nx.DiGraph()
-            for _, row in final.iterrows():
-                G.add_edge(row['u'], row['v'], LRScore=row['LRScore'], freq=row['freq'], weight=row['LRScore'], inter=row['freq'])
-            
+            final['weight'] = final['LRScore']
+            final['inter'] = final['freq']
+            G = nx.from_pandas_edgelist(
+                final, source='u', target='v',
+                edge_attr=['LRScore', 'freq', 'weight', 'inter'],
+                create_using=nx.DiGraph()
+            )
             data['graphs'][cmp_name] = nx.to_pandas_edgelist(G)
             
-            G_ggi = nx.DiGraph()
-            for _, row in final_data.iterrows():
-                G_ggi.add_edge(row['ligpair'], row['recpair'], LRScore=row['LRScore'], weight=row['LRScore'], inter=row['LRScore'])
-            
+            ggi_data = final_data[['ligpair', 'recpair', 'LRScore']].copy()
+            ggi_data['weight'] = ggi_data['LRScore']
+            ggi_data['inter'] = ggi_data['LRScore']
+            G_ggi = nx.from_pandas_edgelist(
+                ggi_data, source='ligpair', target='recpair',
+                edge_attr=['LRScore', 'weight', 'inter'],
+                create_using=nx.DiGraph()
+            )
             data['graphs_ggi'][cmp_name] = nx.to_pandas_edgelist(G_ggi)
     
     annData.uns['pycrosstalker']['results'] = data

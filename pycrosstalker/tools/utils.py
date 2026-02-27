@@ -392,15 +392,9 @@ def add_node_type(df):
     df
     
     """
-
-    df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|L" if row['type_gene_A'] == "Ligand" else row['gene_A'], axis=1)
-    df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|R" if row['type_gene_A'] == "Receptor" else row['gene_A'], axis=1)
-    df['gene_A'] = df.apply(lambda row: f"{row['gene_A']}|TF" if row['type_gene_A'] == "Transcription Factor" else row['gene_A'], axis=1)
-    
-    df['gene_B'] = df.apply(lambda row: f"{row['gene_B']}|L" if row['type_gene_B'] == "Ligand" else row['gene_B'], axis=1)
-    df['gene_B'] = df.apply(lambda row: f"{row['gene_B']}|R" if row['type_gene_B'] == "Receptor" else row['gene_B'], axis=1)
-    df['gene_B'] = df.apply(lambda row: f"{row['gene_B']}|TF" if row['type_gene_B'] == "Transcription Factor" else row['gene_B'], axis=1)
-    
+    _suffix_map = {'Ligand': '|L', 'Receptor': '|R', 'Transcription Factor': '|TF'}
+    df['gene_A'] = df['gene_A'] + df['type_gene_A'].map(_suffix_map).fillna('')
+    df['gene_B'] = df['gene_B'] + df['type_gene_B'].map(_suffix_map).fillna('')
     return df
 
 
@@ -434,38 +428,24 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
 
             joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
             joined.fillna(0, inplace=True)
-            pvals = []
             measure_ctr_sum = joined['measure_ctr'].sum()
             measure_exp_sum = joined['measure_exp'].sum()
-            for idx, row in joined.iterrows():
-                ctotal = joined['measure_ctr'].sum() - row['measure_ctr']
-                etotal = joined['measure_exp'].sum() - row['measure_exp']
-                matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
-
-                odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
-    
-                # Monte Carlo resampling (if B > 0)
-                B = 1000
-                np.random.seed(42)  # For reproducibility
-                if B > 0:
-                    count = 0
-                    for _ in range(B):
-                        shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
-                        if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
-                            count += 1
-                    perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
-                else:
-                    perm_p_value = None
-
-                lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
-
-                pvals.append({
-                    'cellpair': row['cellpair'],
-                    'p_value': p_value,
-                    'lodds': lodds
-                })
-
-            pval_df = pd.DataFrame(pvals)
+            ctotals = measure_ctr_sum - joined['measure_ctr']
+            etotals = measure_exp_sum - joined['measure_exp']
+            fisher_results = [
+                fisher_exact([[exp, etot], [ctr, ctot]], alternative="two-sided")
+                for exp, etot, ctr, ctot in zip(
+                    joined['measure_exp'], etotals, joined['measure_ctr'], ctotals
+                )
+            ]
+            odds_ratios = [r[0] for r in fisher_results]
+            p_values = [r[1] for r in fisher_results]
+            lodds = [np.log2(or_) if or_ > 0 else None for or_ in odds_ratios]
+            pval_df = pd.DataFrame({
+                'cellpair': joined['cellpair'].values,
+                'p_value': p_values,
+                'lodds': lodds,
+            })
             data['stats'][f'{exp_name}_x_{ctr_name}'] = pval_df
 
         # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
@@ -486,37 +466,24 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
                     # Merge control and experimental data on 'cellpair'
                     joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
                     joined.fillna(0, inplace=True)
-                    pvals = []
                     measure_ctr_sum = joined['measure_ctr'].sum()
                     measure_exp_sum = joined['measure_exp'].sum()
-                    for idx, row in joined.iterrows():
-                        ctotal = measure_ctr_sum - row['measure_ctr']
-                        etotal = measure_exp_sum - row['measure_exp']
-                        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
-                        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
-    
-                        # Monte Carlo resampling (if B > 0)
-                        B = 1000
-                        np.random.seed(42)  # For reproducibility
-                        if B > 0:
-                            count = 0
-                            for _ in range(B):
-                                shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
-                                if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
-                                    count += 1
-                            perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
-                        else:
-                            perm_p_value = None
-
-                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
-
-                        pvals.append({
-                            'cellpair': row['cellpair'],
-                            'p_value': p_value,
-                            'lodds': lodds
-                        })
-
-                    pval_df = pd.DataFrame(pvals)
+                    ctotals = measure_ctr_sum - joined['measure_ctr']
+                    etotals = measure_exp_sum - joined['measure_exp']
+                    fisher_results = [
+                        fisher_exact([[exp, etot], [ctr, ctot]], alternative="two-sided")
+                        for exp, etot, ctr, ctot in zip(
+                            joined['measure_exp'], etotals, joined['measure_ctr'], ctotals
+                        )
+                    ]
+                    odds_ratios = [r[0] for r in fisher_results]
+                    p_values = [r[1] for r in fisher_results]
+                    lodds = [np.log2(or_) if or_ > 0 else None for or_ in odds_ratios]
+                    pval_df = pd.DataFrame({
+                        'cellpair': joined['cellpair'].values,
+                        'p_value': p_values,
+                        'lodds': lodds,
+                    })
                     data['stats'][f'{list(data["tables"].keys())[i]}_x_{list(data["tables"].keys())[0]}'] = pval_df
 
             # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
