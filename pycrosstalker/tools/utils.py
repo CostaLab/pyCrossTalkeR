@@ -705,7 +705,7 @@ def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellph
     if not pval_filter:
         sel.remove(pval_key)
     
-    if isinstance(my_variable, pd.DataFrame):
+    if isinstance(adata.uns[liana_key], pd.DataFrame):
         if "label" in adata.uns[liana_key].columns:
             for i in adata.uns[liana_key].label.unique():
                 evfull = adata.uns[liana_key].loc[adata.uns[liana_key].label==i,:]
@@ -723,7 +723,7 @@ def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellph
                     evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
                 evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
                 adata.uns['pycrosstalker']['path'][i] = evfull
-    elif isinstance(my_variable, dict):
+    elif isinstance(adata.uns[liana_key], dict):
         for i in adata.uns[liana_key]:
             evfull = adata.uns[liana_key][i]
             evfull = evfull.loc[:,sel]
