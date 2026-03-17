@@ -2,6 +2,13 @@
 
 <img src="https://github.com/CostaLab/pyCrossTalkeR/blob/main/logo1.png" align="right" width="200" />
 
+
+<!-- Python versions supported -->
+[![Python Versions](https://img.shields.io/pypi/pyversions/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+[![Downloads](https://img.shields.io/pypi/dm/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+[![License](https://img.shields.io/pypi/l/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
+[![PyPI version](https://img.shields.io/pypi/v/pycrosstalker)](https://pypi.org/project/YOUR-PACKAGE-NAME/)
+
 James S. Nagai<sup>1</sup>,
 Vanessa Kloeker<sup>1</sup>,
 Ruthvik Koppala<sup>1</sup>,
@@ -23,12 +30,6 @@ Ivan G. Costa<sup>1*</sup>
 <sup>6</sup>Department of Hematology, Erasmus Medical Center, Rotterdam, 3015GD, the Netherlands
 
 ![Alt text](image.png)
-
-<!-- Python versions supported -->
-[![Python Versions](https://img.shields.io/pypi/pyversions/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-[![Downloads](https://img.shields.io/pypi/dm/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-[![License](https://img.shields.io/pypi/l/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-[![PyPI version](https://img.shields.io/pypi/v/pycrosstalker)](https://pypi.org/project/YOUR-PACKAGE-NAME/)
 
 
 **Motivation:** Ligand-receptor (LR) analysis allows the characterization of cellular crosstalk from single cell RNA-seq data. However, current LR methods provide limited approaches for prioritization of cell types, ligands or receptors or characterizing changes in crosstalk between two biological conditions.
