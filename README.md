@@ -59,7 +59,7 @@ libgeos-dev
 ```
   
 
-## Features v2.0.0
+## Features v2.1.3
 
 
 - Single and Comparative Reports
@@ -69,6 +69,7 @@ libgeos-dev
       - All measures and PC table
       - PC1 and PC2 based barplot
    - LR pair visualization plot can be done
+   - Statistical tests for both interaction amount and also interaction strenght
 
 
 # References
