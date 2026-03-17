@@ -4,10 +4,10 @@
 
 
 <!-- Python versions supported -->
-[![Python Versions](https://img.shields.io/pypi/pyversions/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-[![Downloads](https://img.shields.io/pypi/dm/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-[![License](https://img.shields.io/pypi/l/pycrosstalker)](https://pypi.org/project/pycrosstalker/)
-[![PyPI version](https://img.shields.io/pypi/v/pycrosstalker)](https://pypi.org/project/YOUR-PACKAGE-NAME/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pycrosstalker?cacheSeconds=300)](https://pypi.org/project/pycrosstalker/)
+[![Downloads](https://img.shields.io/pypi/dm/pycrosstalker?cacheSeconds=300)](https://pypi.org/project/pycrosstalker/)
+[![License](https://img.shields.io/pypi/l/pycrosstalker?cacheSeconds=300)](https://pypi.org/project/pycrosstalker/)
+[![PyPI version](https://img.shields.io/pypi/v/pycrosstalker?cacheSeconds=300)](https://pypi.org/project/pycrosstalker/)
 
 James S. Nagai<sup>1</sup>,
 Vanessa Kloeker<sup>1</sup>,
