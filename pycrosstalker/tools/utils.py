@@ -618,7 +618,7 @@ def mannwhitneyu_test_cci(annData, measure, out_path, comparison=None):
 
     if comparison:
         for pair in comparison:
-            ctr_name, exp_name = pair
+            ctr_name, exp_name = pair[1],pair[0]
 
             results = []
             for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
