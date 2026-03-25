@@ -3,8 +3,8 @@ name = "pycrosstalker"
 version = "2.1.4"
 description = ""
 authors = [
-    { name = "jsnagai", email = "james.nagai@gmail.com" }
-    { name = "ruthvik07", email = "ruthvik.koppala@gmail.com" },
+    { name = "jsnagai", email = "james.nagai@gmail.com" },
+    { name = "ruthvik07", email = "ruthvik.koppala@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
