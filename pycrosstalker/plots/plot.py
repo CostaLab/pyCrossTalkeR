@@ -192,7 +192,7 @@ def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi
 
         # Mapping Table
         if include_tf:
-            map_df = pd.DataFrame(pca_df.index, columns=["gene"])
+            map_df = pd.DataFrame({"gene": pca_df.index})
             map_df["mapping"] = map_df["gene"].apply(lambda gene: "Receptor" if "|R" in gene else ("Ligand" if "|L" in gene else "Transcription Factor"))
             color_groups = ["#f8756b", "#00b835", "#619cff"]
         else:
@@ -334,9 +334,9 @@ def plot_bar_rankings(annData, table_name, ranking, type = None, filter_sign = N
             pass
 
         if filter_sign == 'pos':
-            rankings_table = rankings_table[rankings_table['ranking'] > 0]
+            rankings_table = rankings_table[rankings_table[ranking] > 0]
         elif filter_sign == 'neg':
-            rankings_table = rankings_table[rankings_table['ranking'] < 0]
+            rankings_table = rankings_table[rankings_table[ranking] < 0]
 
 
         if rankings_table.empty:
