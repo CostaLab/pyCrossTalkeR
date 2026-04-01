@@ -13,6 +13,9 @@ import networkx as nx
 import re
 import json
 
+# Small epsilon for floating-point tolerance when comparing p-values in Monte Carlo test
+_PVAL_TOL = 1e-10
+
 #'Ranking the most interactive gene (ligand or receptor)
 #'
 #'@param data lrobject
@@ -409,16 +412,18 @@ def _pairwise_stats(joined, B=1000, rng=None):
 
     Parameters
     ----------
-    joined :
-        DataFrame with columns 'cellpair', 'measure_ctr', 'measure_exp'
-    B :
-        Number of Monte Carlo permutations
-    rng :
-        numpy Generator for reproducibility; created with seed 42 if None
+    joined : pandas.DataFrame
+        DataFrame with columns 'cellpair' (str), 'measure_ctr' (numeric count for the
+        control condition), and 'measure_exp' (numeric count for the experimental condition).
+    B : int
+        Number of Monte Carlo permutations.
+    rng : numpy.random.Generator, optional
+        Random number generator for reproducibility; created with seed 42 if None.
 
     Returns
     -------
-    DataFrame with columns 'cellpair', 'p_value', 'perm_p_value', 'lodds'
+    pandas.DataFrame
+        DataFrame with columns 'cellpair', 'p_value', 'perm_p_value', 'lodds'
     """
     if rng is None:
         rng = np.random.default_rng(42)
@@ -434,18 +439,21 @@ def _pairwise_stats(joined, B=1000, rng=None):
 
         odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
 
-        # Monte Carlo permutation test
+        # Monte Carlo permutation test:
+        # np.tile creates B copies of the 4-element flat matrix; rng.permuted then
+        # independently shuffles each row (permutation), giving a (B, 4) array that
+        # is reshaped into B individual 2×2 matrices.
         flat = matrix.flatten()
-        # Generate all B permutations at once (each row is one permutation)
         permuted = rng.permuted(np.tile(flat, (B, 1)), axis=1).reshape(B, 2, 2)
-        # Deduplicate: with only 4 values there are at most 4!=24 unique arrangements
+        # Deduplicate: with only 4 values there are at most 4!=24 unique arrangements,
+        # so we call fisher_exact only for each unique matrix instead of all B copies.
         unique_perms, inverse = np.unique(permuted.reshape(B, 4), axis=0, return_inverse=True)
         unique_pvals = np.array([
             fisher_exact(p.reshape(2, 2), alternative="two-sided")[1]
             for p in unique_perms
         ])
         perm_pvals = unique_pvals[inverse]
-        count = (perm_pvals <= p_value + 1e-10).sum()
+        count = (perm_pvals <= p_value + _PVAL_TOL).sum()
         perm_p_value = (count + 1) / (B + 1)
 
         lodds = np.log2(odds_ratio) if odds_ratio > 0 else None
