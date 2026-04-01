@@ -36,35 +36,10 @@ from pycrosstalker.tools.utils import (
 )
 
 # ---------------------------------------------------------------------------
-# Shared constants and helpers (also defined in conftest.py for fixtures)
+# Shared constants and helpers (imported from test/helpers.py)
 # ---------------------------------------------------------------------------
 
-SEL_COLUMNS = ['source', 'target', 'gene_A', 'gene_B', 'type_gene_A', 'type_gene_B', 'MeanLR']
-
-
-def make_lr_df(seed=0):
-    """Create a minimal synthetic LR interaction DataFrame.
-
-    Uses 3 cell types and 3 LR pairs so PCA(n_components=2) always succeeds
-    (3 nodes >= 2 required components).
-    """
-    np.random.seed(seed)
-    cell_types = ['CellA', 'CellB', 'CellC']
-    lr_pairs = [('GENE_L1', 'GENE_R1'), ('GENE_L2', 'GENE_R2'), ('GENE_L3', 'GENE_R3')]
-    rows = []
-    for src in cell_types:
-        for tgt in cell_types:
-            for gl, gr in lr_pairs:
-                rows.append({
-                    'source': src,
-                    'target': tgt,
-                    'gene_A': gl,
-                    'gene_B': gr,
-                    'type_gene_A': 'Ligand',
-                    'type_gene_B': 'Receptor',
-                    'MeanLR': abs(float(np.random.normal(1.5, 0.5))) + 0.1,
-                })
-    return pd.DataFrame(rows)
+from test.helpers import SEL_COLUMNS, make_lr_df  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
