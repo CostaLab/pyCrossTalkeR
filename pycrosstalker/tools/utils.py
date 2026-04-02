@@ -13,6 +13,9 @@ import networkx as nx
 import re
 import json
 
+# Small epsilon for floating-point tolerance when comparing p-values in Monte Carlo test
+_PVAL_TOL = 1e-10
+
 #'Ranking the most interactive gene (ligand or receptor)
 #'
 #'@param data lrobject
@@ -404,6 +407,67 @@ def add_node_type(df):
     return df
 
 
+def _pairwise_stats(joined, B=1000, rng=None):
+    """Compute Fisher's exact test and Monte Carlo permutation p-values for each cell pair.
+
+    Parameters
+    ----------
+    joined : pandas.DataFrame
+        DataFrame with columns 'cellpair' (str), 'measure_ctr' (numeric count for the
+        control condition), and 'measure_exp' (numeric count for the experimental condition).
+    B : int
+        Number of Monte Carlo permutations.
+    rng : numpy.random.Generator, optional
+        Random number generator for reproducibility; created with seed 42 if None.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns 'cellpair', 'p_value', 'perm_p_value', 'lodds'
+    """
+    if rng is None:
+        rng = np.random.default_rng(42)
+
+    measure_ctr_sum = joined['measure_ctr'].sum()
+    measure_exp_sum = joined['measure_exp'].sum()
+    pvals = []
+
+    for _, row in joined.iterrows():
+        ctotal = measure_ctr_sum - row['measure_ctr']
+        etotal = measure_exp_sum - row['measure_exp']
+        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+
+        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
+
+        # Monte Carlo permutation test:
+        # np.tile creates B copies of the 4-element flat matrix; rng.permuted then
+        # independently shuffles each row (permutation), giving a (B, 4) array that
+        # is reshaped into B individual 2×2 matrices.
+        flat = matrix.flatten()
+        permuted = rng.permuted(np.tile(flat, (B, 1)), axis=1).reshape(B, 2, 2)
+        # Deduplicate: with only 4 values there are at most 4!=24 unique arrangements,
+        # so we call fisher_exact only for each unique matrix instead of all B copies.
+        unique_perms, inverse = np.unique(permuted.reshape(B, 4), axis=0, return_inverse=True)
+        unique_pvals = np.array([
+            fisher_exact(p.reshape(2, 2), alternative="two-sided")[1]
+            for p in unique_perms
+        ])
+        perm_pvals = unique_pvals[inverse]
+        count = (perm_pvals <= p_value + _PVAL_TOL).sum()
+        perm_p_value = (count + 1) / (B + 1)
+
+        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None
+
+        pvals.append({
+            'cellpair': row['cellpair'],
+            'p_value': p_value,
+            'perm_p_value': perm_p_value,
+            'lodds': lodds,
+        })
+
+    return pd.DataFrame(pvals)
+
+
 def fisher_test_cci(annData, measure, out_path, comparison=None):
     """
     Evaluate Differences in the edge proportion
@@ -423,6 +487,7 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
     
     """
     data = annData.uns['pycrosstalker']['results']
+    rng = np.random.default_rng(42)
 
     if comparison is not None:
         for pair in comparison:
@@ -434,38 +499,8 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
 
             joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
             joined.fillna(0, inplace=True)
-            pvals = []
-            measure_ctr_sum = joined['measure_ctr'].sum()
-            measure_exp_sum = joined['measure_exp'].sum()
-            for idx, row in joined.iterrows():
-                ctotal = joined['measure_ctr'].sum() - row['measure_ctr']
-                etotal = joined['measure_exp'].sum() - row['measure_exp']
-                matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
 
-                odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
-    
-                # Monte Carlo resampling (if B > 0)
-                B = 1000
-                np.random.seed(42)  # For reproducibility
-                if B > 0:
-                    count = 0
-                    for _ in range(B):
-                        shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
-                        if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
-                            count += 1
-                    perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
-                else:
-                    perm_p_value = None
-
-                lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
-
-                pvals.append({
-                    'cellpair': row['cellpair'],
-                    'p_value': p_value,
-                    'lodds': lodds
-                })
-
-            pval_df = pd.DataFrame(pvals)
+            pval_df = _pairwise_stats(joined, rng=rng)
             data['stats'][f'{exp_name}_x_{ctr_name}'] = pval_df
 
         # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
@@ -486,37 +521,8 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
                     # Merge control and experimental data on 'cellpair'
                     joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
                     joined.fillna(0, inplace=True)
-                    pvals = []
-                    measure_ctr_sum = joined['measure_ctr'].sum()
-                    measure_exp_sum = joined['measure_exp'].sum()
-                    for idx, row in joined.iterrows():
-                        ctotal = measure_ctr_sum - row['measure_ctr']
-                        etotal = measure_exp_sum - row['measure_exp']
-                        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
-                        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
-    
-                        # Monte Carlo resampling (if B > 0)
-                        B = 1000
-                        np.random.seed(42)  # For reproducibility
-                        if B > 0:
-                            count = 0
-                            for _ in range(B):
-                                shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
-                                if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
-                                    count += 1
-                            perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
-                        else:
-                            perm_p_value = None
 
-                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
-
-                        pvals.append({
-                            'cellpair': row['cellpair'],
-                            'p_value': p_value,
-                            'lodds': lodds
-                        })
-
-                    pval_df = pd.DataFrame(pvals)
+                    pval_df = _pairwise_stats(joined, rng=rng)
                     data['stats'][f'{list(data["tables"].keys())[i]}_x_{list(data["tables"].keys())[0]}'] = pval_df
 
             # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
