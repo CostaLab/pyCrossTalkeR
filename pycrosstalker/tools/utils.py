@@ -714,8 +714,8 @@ def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellph
     
     if isinstance(adata.uns[liana_key], pd.DataFrame):
         if condition_key in adata.uns[liana_key].columns:
-            for i in adata.uns[liana_key].label.unique():
-                evfull = adata.uns[liana_key].loc[adata.uns[liana_key].label==i,:]
+            for i in adata.uns[liana_key][condition_key].unique():
+                evfull = adata.uns[liana_key].loc[adata.uns[liana_key][condition_key]==i,:]
                 evfull = evfull.loc[:,sel]
                 evfull['type_gene_A'] = 'Ligand'
                 evfull['type_gene_B'] = 'Receptor'
@@ -748,4 +748,6 @@ def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellph
             evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
             adata.uns['pycrosstalker']['path'][i] = evfull
     return (adata.copy())
+
+
 
