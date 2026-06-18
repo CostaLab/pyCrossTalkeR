@@ -700,7 +700,8 @@ def create_ordered_circular_layout(ordered_nodes):
     return layout
 
 
-def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellphone_pvals",compute_means=False,pval_filter=True):
+def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellphone_pvals",
+               compute_means=False,pval_filter=True,condition_key="condition"):
     adata.uns['pycrosstalker'] = {}
     adata.uns['pycrosstalker']['path'] = {}
     sel = ['ligand','receptor_complex','source','target',pval_key, score_key]
@@ -712,7 +713,7 @@ def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellph
         sel.remove(pval_key)
     
     if isinstance(adata.uns[liana_key], pd.DataFrame):
-        if "label" in adata.uns[liana_key].columns:
+        if condition_key in adata.uns[liana_key].columns:
             for i in adata.uns[liana_key].label.unique():
                 evfull = adata.uns[liana_key].loc[adata.uns[liana_key].label==i,:]
                 evfull = evfull.loc[:,sel]
