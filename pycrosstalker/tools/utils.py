@@ -4,7 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import igraph
 import itertools
-from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu
+from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu, gmean
 from scipy.cluster.hierarchy import linkage, leaves_list
 import pickle
 from itertools import combinations
@@ -12,6 +12,9 @@ import os
 import networkx as nx
 import re
 import json
+
+# Small epsilon for floating-point tolerance when comparing p-values in Monte Carlo test
+_PVAL_TOL = 1e-10
 
 #'Ranking the most interactive gene (ligand or receptor)
 #'
@@ -280,11 +283,8 @@ def comparative_pagerank(rankings, slotname, graphname, curr_rkg):
     if "_ggi" in slotname:
         p = rankings[p_ctr + '_ggi'][['nodes','Pagerank']]
         q = rankings[q_exp + '_ggi'][['nodes','Pagerank']]
-
-        
-
     else:
-        p = rankings[p_ctr][['nodes', 'Pagerank']].loc[rankings[q_exp]['Pagerank'].index]
+        p = rankings[p_ctr][['nodes', 'Pagerank']]
         q = rankings[q_exp][['nodes', 'Pagerank']]
 
     
@@ -365,7 +365,7 @@ def comparative_med(rankings, slotname, graphname, curr_rkg):
         p = rankings[p_ctr + '_ggi'][['nodes', 'Mediator']]
         q = rankings[q_exp + '_ggi'][['nodes', 'Mediator']]
     else:
-        p = rankings[p_ctr][['nodes', 'Mediator']].loc[rankings[q_exp][['nodes', 'Mediator']].index]
+        p = rankings[p_ctr][['nodes', 'Mediator']]
         q = rankings[q_exp][['nodes', 'Mediator']]
 
     p.columns = ['nodes', 'm_ctr']
@@ -407,6 +407,67 @@ def add_node_type(df):
     return df
 
 
+def _pairwise_stats(joined, B=1000, rng=None):
+    """Compute Fisher's exact test and Monte Carlo permutation p-values for each cell pair.
+
+    Parameters
+    ----------
+    joined : pandas.DataFrame
+        DataFrame with columns 'cellpair' (str), 'measure_ctr' (numeric count for the
+        control condition), and 'measure_exp' (numeric count for the experimental condition).
+    B : int
+        Number of Monte Carlo permutations.
+    rng : numpy.random.Generator, optional
+        Random number generator for reproducibility; created with seed 42 if None.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns 'cellpair', 'p_value', 'perm_p_value', 'lodds'
+    """
+    if rng is None:
+        rng = np.random.default_rng(42)
+
+    measure_ctr_sum = joined['measure_ctr'].sum()
+    measure_exp_sum = joined['measure_exp'].sum()
+    pvals = []
+
+    for _, row in joined.iterrows():
+        ctotal = measure_ctr_sum - row['measure_ctr']
+        etotal = measure_exp_sum - row['measure_exp']
+        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+
+        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
+
+        # Monte Carlo permutation test:
+        # np.tile creates B copies of the 4-element flat matrix; rng.permuted then
+        # independently shuffles each row (permutation), giving a (B, 4) array that
+        # is reshaped into B individual 2×2 matrices.
+        flat = matrix.flatten()
+        permuted = rng.permuted(np.tile(flat, (B, 1)), axis=1).reshape(B, 2, 2)
+        # Deduplicate: with only 4 values there are at most 4!=24 unique arrangements,
+        # so we call fisher_exact only for each unique matrix instead of all B copies.
+        unique_perms, inverse = np.unique(permuted.reshape(B, 4), axis=0, return_inverse=True)
+        unique_pvals = np.array([
+            fisher_exact(p.reshape(2, 2), alternative="two-sided")[1]
+            for p in unique_perms
+        ])
+        perm_pvals = unique_pvals[inverse]
+        count = (perm_pvals <= p_value + _PVAL_TOL).sum()
+        perm_p_value = (count + 1) / (B + 1)
+
+        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None
+
+        pvals.append({
+            'cellpair': row['cellpair'],
+            'p_value': p_value,
+            'perm_p_value': perm_p_value,
+            'lodds': lodds,
+        })
+
+    return pd.DataFrame(pvals)
+
+
 def fisher_test_cci(annData, measure, out_path, comparison=None):
     """
     Evaluate Differences in the edge proportion
@@ -426,6 +487,7 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
     
     """
     data = annData.uns['pycrosstalker']['results']
+    rng = np.random.default_rng(42)
 
     if comparison is not None:
         for pair in comparison:
@@ -436,39 +498,9 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
             e = data['tables'][exp_name].groupby('cellpair').size().reset_index(name='measure')
 
             joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
-            
-            pvals = []
-            measure_ctr_sum = joined['measure_ctr'].sum()
-            measure_exp_sum = joined['measure_exp'].sum()
-            for idx, row in joined.iterrows():
-                ctotal = joined['measure_ctr'].sum() - row['measure_ctr']
-                etotal = joined['measure_exp'].sum() - row['measure_exp']
-                matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
+            joined.fillna(0, inplace=True)
 
-                odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
-    
-                # Monte Carlo resampling (if B > 0)
-                B = 1000
-                np.random.seed(42)  # For reproducibility
-                if B > 0:
-                    count = 0
-                    for _ in range(B):
-                        shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
-                        if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
-                            count += 1
-                    perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
-                else:
-                    perm_p_value = None
-
-                lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
-
-                pvals.append({
-                    'cellpair': row['cellpair'],
-                    'p_value': p_value,
-                    'lodds': lodds
-                })
-
-            pval_df = pd.DataFrame(pvals)
+            pval_df = _pairwise_stats(joined, rng=rng)
             data['stats'][f'{exp_name}_x_{ctr_name}'] = pval_df
 
         # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
@@ -488,38 +520,9 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
 
                     # Merge control and experimental data on 'cellpair'
                     joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
-                    
-                    pvals = []
-                    measure_ctr_sum = joined['measure_ctr'].sum()
-                    measure_exp_sum = joined['measure_exp'].sum()
-                    for idx, row in joined.iterrows():
-                        ctotal = measure_ctr_sum - row['measure_ctr']
-                        etotal = measure_exp_sum - row['measure_exp']
-                        matrix = np.array([[row['measure_exp'], etotal], [row['measure_ctr'], ctotal]])
-                        odds_ratio, p_value = fisher_exact(matrix, alternative="two-sided")
-    
-                        # Monte Carlo resampling (if B > 0)
-                        B = 1000
-                        np.random.seed(42)  # For reproducibility
-                        if B > 0:
-                            count = 0
-                            for _ in range(B):
-                                shuffled = np.random.permutation(matrix.flatten()).reshape(matrix.shape)
-                                if fisher_exact(shuffled, alternative="two-sided")[1] <= p_value:
-                                    count += 1
-                            perm_p_value = (count + 1) / (B + 1)  # Avoid zero probability
-                        else:
-                            perm_p_value = None
+                    joined.fillna(0, inplace=True)
 
-                        lodds = np.log2(odds_ratio) if odds_ratio > 0 else None  # Compute log odds ratio
-
-                        pvals.append({
-                            'cellpair': row['cellpair'],
-                            'p_value': p_value,
-                            'lodds': lodds
-                        })
-
-                    pval_df = pd.DataFrame(pvals)
+                    pval_df = _pairwise_stats(joined, rng=rng)
                     data['stats'][f'{list(data["tables"].keys())[i]}_x_{list(data["tables"].keys())[0]}'] = pval_df
 
             # with open(os.path.join(out_path, "LR_data_final.pkl"), "wb") as f:
@@ -581,9 +584,9 @@ def filtered_graphs(annData, out_path):
                 (h[i], f[i]) for i, edge_pair in enumerate(zip(h, f))
                 if f"{h[i]}@{f[i]}" in significant_edges['cellpair'].values
             ]
-
-            filtered_graph = graph.edge_subgraph(significant_edge_pairs).copy()
-            temp[name] = filtered_graph
+            if len(significant_edge_pairs) > 0:
+                filtered_graph = graph.edge_subgraph(significant_edge_pairs).copy()
+                temp[name] = filtered_graph
 
     for name in temp:   
         data['graphs'][f"{name}_filtered"] = nx.to_pandas_edgelist(temp[name])
@@ -621,7 +624,7 @@ def mannwhitneyu_test_cci(annData, measure, out_path, comparison=None):
 
     if comparison:
         for pair in comparison:
-            ctr_name, exp_name = pair
+            ctr_name, exp_name = pair[1],pair[0]
 
             results = []
             for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
@@ -695,3 +698,56 @@ def create_ordered_circular_layout(ordered_nodes):
         for node, angle in zip(ordered_nodes, angles)
     }
     return layout
+
+
+def from_liana(adata, liana_key = "liana", score_key="lr_means",pval_key="cellphone_pvals",
+               compute_means=False,pval_filter=True,condition_key="condition"):
+    adata.uns['pycrosstalker'] = {}
+    adata.uns['pycrosstalker']['path'] = {}
+    sel = ['ligand','receptor_complex','source','target',pval_key, score_key]
+    if compute_means:
+        sel.remove(score_key)
+        sel.append('ligand_means')
+        sel.append('receptor_means')
+    if not pval_filter:
+        sel.remove(pval_key)
+    
+    if isinstance(adata.uns[liana_key], pd.DataFrame):
+        if condition_key in adata.uns[liana_key].columns:
+            for i in adata.uns[liana_key][condition_key].unique():
+                evfull = adata.uns[liana_key].loc[adata.uns[liana_key][condition_key]==i,:]
+                evfull = evfull.loc[:,sel]
+                evfull['type_gene_A'] = 'Ligand'
+                evfull['type_gene_B'] = 'Receptor'
+                evfull['gene_A'] = evfull['ligand']
+                evfull['gene_B'] = evfull['receptor_complex']
+                if not compute_means:
+                    evfull['MeanLR'] = evfull[score_key]
+                else:
+                    evfull['MeanLR'] = gmean(evfull.loc[:,['ligand_means','receptor_means']],axis=1)
+                k = i[0:i.find('_lr_')]
+                if pval_filter:
+                    evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
+                evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
+                adata.uns['pycrosstalker']['path'][i] = evfull
+    elif isinstance(adata.uns[liana_key], dict):
+        for i in adata.uns[liana_key]:
+            evfull = adata.uns[liana_key][i]
+            evfull = evfull.loc[:,sel]
+            evfull['type_gene_A'] = 'Ligand'
+            evfull['type_gene_B'] = 'Receptor'
+            evfull['gene_A'] = evfull['ligand']
+            evfull['gene_B'] = evfull['receptor_complex']
+            if not compute_means:
+                evfull['MeanLR'] = evfull[score_key]
+            else:
+                evfull['MeanLR'] = gmean(evfull.loc[:,['ligand_means','receptor_means']],axis=1)
+            k = i[0:i.find('_lr_')]
+            if pval_filter:
+                evfull = evfull.loc[list(evfull[pval_key].to_numpy()<=0.05),:]
+            evfull = evfull.loc[:, ['source', 'target', 'type_gene_A', 'type_gene_B', 'gene_A', 'gene_B', 'MeanLR']]
+            adata.uns['pycrosstalker']['path'][i] = evfull
+    return (adata.copy())
+
+
+

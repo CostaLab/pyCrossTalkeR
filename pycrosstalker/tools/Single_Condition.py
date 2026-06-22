@@ -9,7 +9,8 @@ from .utils import *
 
 def read_lr_single_condition(input, sel_columns, out_path="/tmp/", sep=",", colors=None):
     """
-    This function loads the single conditions LR outputs and use it to generate the report data and it`s object It assumes that the table presents the following columns Ligand, Ligand.Cluster, Receptor,Receptor.Cluster and MeanLR/another measure
+    This function loads the single conditions LR outputs and use it to generate the report data and it`s object. 
+    It assumes that the table presents the following columns Ligand, Ligand.Cluster, Receptor,Receptor.Cluster and MeanLR/another measure
 
     Parameters
     ----------
@@ -114,7 +115,7 @@ def read_lr_single_condition(input, sel_columns, out_path="/tmp/", sep=",", colo
     coords = {node: c[i] for i, node in enumerate(sorted(set(unif_celltypes), key=lambda x: x.lower()), start=0)}
 
     if colors is None:
-        matplot_colors = plt.cm.get_cmap('Paired', len(set(unif_celltypes)))
+        matplot_colors = plt.get_cmap('Paired', len(set(unif_celltypes)))
         colors = {node: mcolors.to_hex(matplot_colors(i)) for i, node in enumerate(sorted(set(unif_celltypes), key=lambda x: x.lower()), start=0)}
 
     lr = {"graphs": graphs,

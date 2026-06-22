@@ -5,16 +5,13 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import seaborn as sns
-import plotly.colors as pc
 import plotly.graph_objects as go
-from plotnine import *
 from adjustText import adjust_text
 from gprofiler import GProfiler
 from sankeyflow import Sankey
-import json
 
 
-def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10):
+def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10,return_figure=False):
     """
     This function does a CCI plot
 
@@ -37,17 +34,21 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
     high :
         Higher threshould which will be filtered. Edges within the interval [low\,high] are filtered.
     ignore_alpha :
-        not include transparency on the plot
+        Not include transparency on the plot edges
     log :
-        logscale the interactions
+        Logscale the interactions
     efactor :
-        edge scale factor
+        Edge scale factor
     vfactor :
-        edge scale factor
+        Certex scale factor
     vnames :
-        remove vertex labels
+        Remove vertex labels
     pg :
-        pagerank values
+        Pagerank values
+    figsize:
+        Set matplotlib figsize
+    return_figure:
+        Option for return matplotlib figure axes
 
     Returns
     -------
@@ -127,21 +128,21 @@ def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, 
         min_pg, max_pg = min(pg), max(pg)
         legend1 = ax.legend(loc='lower left', title="Pagerank",
                 handles=[plt.Line2D([], [], linestyle='', marker='o', markersize=v / vfactor, markerfacecolor='black', markeredgecolor='none') for v in [min_pg, (min_pg + max_pg) / 2, max_pg]],
-                labels=[round(min_pg, 2), round((min_pg + max_pg) / 2, 2), round(max_pg, 2)],  bbox_to_anchor=(0.8, 0))
+                labels=[round(min_pg, 2), round((min_pg + max_pg) / 2, 2), round(max_pg, 2)], bbox_to_anchor=(0.95, 0.3))
 
     # Thickness legend
     non_zero_inter_edges = [d['inter'] for _, _, d in graph.edges(data=True) if d.get('inter', 0) != 0]
     if non_zero_inter_edges:
         e_wid_sp = [round(min(non_zero_inter_edges), 2), round(min(non_zero_inter_edges) + (emax / 2), 2), round(emax, 2)]
-        legend2 = ax.legend(e_wid_sp, title='Percentage of \nthe interactions', title_fontsize='small', loc='upper left', bbox_to_anchor=(0.8, 0.4))
+        legend2 = ax.legend(e_wid_sp, title='Percentage of \nthe interactions', title_fontsize='small', loc='upper left', bbox_to_anchor=(0.95, 0.7))
 
     ax.add_artist(legend1)
-    ax.add_artist(legend2)
-    
     ax.set_title(plt_name)
     # Show the plot
     plt.tight_layout()
     plt.show()
+    if return_figure:
+        return (fig,ax)
 
 
 def plot_pca_LR_comparative(lrobj_tblPCA, pca_table, dims=(1, 2), ret=False, ggi=True, include_tf=False, gene_types="all"):
@@ -768,7 +769,7 @@ def plot_volcane(df, method, p_threshold=0.05, fc_threshold=1, figsize=(8, 6), a
     plt.show()
 
 
-def plot_clustermap(data, title, annot=True):
+def plot_clustermap(data, title, annot=True, return_figure=False):
     """
     This function generates a Clustermap plot
 
@@ -780,15 +781,16 @@ def plot_clustermap(data, title, annot=True):
         Title of the plot
     annot : bool
         Whether to annotate the heatmap with values
-
+    return_figure:
+        Option for return matplotlib figure axes
     Returns
     -------
+    
     Python Cluster map
 
     """
     pivot_table = data.groupby(["source", "target"])["LRScore"].sum().unstack().fillna(0)
-    xlabel, ylabel = "Target Tissue", "Source Tissue"
-    
+    xlabel, ylabel = "Target", "Source"
     g = sns.clustermap(
         pivot_table,
         figsize=(9, 7),
@@ -799,12 +801,11 @@ def plot_clustermap(data, title, annot=True):
         dendrogram_ratio=(0.2, 0.2),
         cbar_pos=(0.02, 0.8, 0.03, 0.15)
     )
-
     g.ax_heatmap.set_xlabel(xlabel)
     g.ax_heatmap.set_ylabel(ylabel)
     plt.title(title, fontsize=14)
-
     plt.show()
+
 
 def plot_graph_clustermap(graph, weight="LRScore", title="Ligand-Receptor Heatmap", annot=True):
     """

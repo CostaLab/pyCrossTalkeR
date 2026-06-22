@@ -15,10 +15,8 @@ Import pycrosstalker as:
 import pycrosstalker
 ```
 
-
 ```{toctree}
-:maxdepth: 2
-
-tools
-plots
+   :maxdepth: 1
+   tools
+   plots
 ```

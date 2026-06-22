@@ -34,7 +34,6 @@ You can install pyCrossTalkeR with the simple commands below:
 
 ```
 pip install pycrosstallker
-
 ```
 
 

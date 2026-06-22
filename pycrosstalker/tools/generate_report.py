@@ -17,7 +17,7 @@ def analise_LR(input,
                 out_file=None, 
                 output_fmt="html_document", 
                 sel_columns=['source','target','gene_A','gene_B','type_gene_A','type_gene_B','MeanLR'], 
-                org='hsa', comparison=None, filtered_net=False, filename=None):
+                comparison=None, filtered_net=False, filename=None,save=True):
     
     """
     Core engine to generate report. Here we perform all the computation related to pyCrossTalkeR
@@ -44,7 +44,8 @@ def analise_LR(input,
         columns from data
     filename :
         filename prefix for output files (to be provided if not already present in AnnData object)
-    
+    save:
+        Indicates if analysis file is saved or not
     Returns
     -------
     Rmarkdown report all objects from each step
@@ -75,7 +76,7 @@ def analise_LR(input,
     print("Network Analysis Done")
 
     print("Generating h5ad file with Analysed Results")
-    annData.write(os.path.join(out_path, annData.uns['pycrosstalker']['details']['filename'] + "_analysed.h5ad"))
-
+    if save:
+        annData.write(os.path.join(out_path, annData.uns['pycrosstalker']['details']['filename'] + "_analysed.h5ad"))
     return(annData)
 

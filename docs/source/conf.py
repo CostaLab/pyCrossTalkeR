@@ -7,12 +7,15 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+
 project = 'pyCrossTalkeR'
-copyright = '2025, Ruthvik Koppala'
-author = 'Ruthvik Koppala'
+copyright = '2025, James Nagai'
+author = 'James Nagai'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
+
 version = '0.1.8.8'
 
 extensions = [
