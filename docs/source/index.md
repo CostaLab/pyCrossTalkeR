@@ -79,11 +79,21 @@ libgeos-dev
 ```{toctree}
 ---
 caption: Getting Started
-maxdepth: 2
+maxdepth: 4
 ---
-Human_Myelofibrosis
-Human_Myocardial_Infarction
+
+notebooks/Human_Myelofibrosis
+
+notebooks/Human_Myocardial_Infarction
+
+
+---
+maxdepth: 3
+---
+notebooks/Integration_Liana_pyCrossTalkeR
+
 ```
+
 
 
 ```{toctree}

@@ -48,3 +48,18 @@ html_js_files = [
     "require.min.js",
     "custom.js",
 ]
+
+# ---Hide prompts ([1]:, [24]:, etc.)
+nbsphinx_prolog = """
+.. raw:: html
+
+    <style>
+        div.nbinput.container div.prompt,
+        div.nboutput.container div.prompt,
+        span.prompt {
+            display: none !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+        }
+    </style>
+"""
