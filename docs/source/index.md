@@ -10,17 +10,21 @@ Michael T. Schaub <sup>3</sup>,
 Rebekka K. Schneider<sup>4,5,6</sup>,
 Ivan G. Costa<sup>1*</sup>
 
+<small>
+
 <sup>1</sup>Institute for Computational Genomics, Faculty of Medicine, RWTH Aachen University, Aachen, 52074 Germany
 
 <sup>2</sup>Department of Hematology and Stem Cell Transplantation, University Hospital Essen, Germany
 
 <sup>3</sup>Department of Computer Science, RWTH Aachen University, Germany
 
-<sup>4</sup>Department of Cell Biology, Institute for Biomedical Engineering, Faculty of Medicine,RWTH Aachen University, Pauwelsstrasse 30, 52074 Aachen, NRW, Germany
+<sup>4</sup>Department of Cell Biology, Institute for Biomedical Engineering, Faculty of Medicine, RWTH Aachen University, Pauwelsstrasse 30, 52074 Aachen, NRW, Germany
 
 <sup>5</sup>Oncode Institute, Erasmus Medical Center, Rotterdam, 3015GD, the Netherlands
 
 <sup>6</sup>Department of Hematology, Erasmus Medical Center, Rotterdam, 3015GD, the Netherlands
+
+</small>
 
 ![Alt text](image.png)
 
@@ -39,7 +43,7 @@ pip install pycrosstallker
 
 
 
-*Note: Please avoid to use the following characters in celltype name: '$'*
+***Note:** Please avoid to use the following characters in celltype name: '$'*
 
 ## Possible system dependencies
 
@@ -67,15 +71,29 @@ libgeos-dev
    - Store analysis results directly in AnnData and export to `.h5ad`
 
 
-## References
+## Citation
 
-[1] CrossTalkeR: Analysis and Visualisation of Ligand Receptor Networks. [link](https://doi.org/10.1093/bioinformatics/btab370)
+If you use `pyCrossTalkeR` in your research, please cite our paper:
 
-[2] Heterogeneous bone-marrow stromal progenitors drive myelofibrosis via a druggable alarmin axis. [link](https://www.cell.com/cell-stem-cell/fulltext/S1934-5909(20)30542-7#secsectitle0115)
+> **CrossTalkeR: Analysis and Visualisation of Ligand Receptor Networks**  
+> James S Nagai, Nils B Leimkühler, Michael T Schaub, Rebekka K Schneider, Ivan G Costa.  
+> *Bioinformatics*, Volume 37, Issue 22, 2021, Pages 4263–4265.  
+> [https://doi.org/10.1093/bioinformatics/btab370](https://doi.org/10.1093/bioinformatics/btab370)
 
-[3] Comparison of Resources and Methods to infer Cell-Cell Communication from Single-cell RNA Data. [link](https://www.biorxiv.org/content/10.1101/2021.05.21.445160v1.full)
+```bibtex
+@article{nagai_crosstalker_2021,
+  title = {{CrossTalkeR}: {Analysis} and {Visualisation} of {Ligand} {Receptor} {Networks}},
+  author = {Nagai, James S and Leimkühler, Nils B and Schaub, Michael T and Schneider, Rebekka K and Costa, Ivan G},
+  journal = {Bioinformatics},
+  volume = {37},
+  number = {22},
+  pages = {4263--4265},
+  year = {2021},
+  doi = {10.1093/bioinformatics/btab370},
+  url = {https://doi.org/10.1093/bioinformatics/btab370}
+}
 
-
+```
 
 ## Tutorials
 
@@ -90,7 +108,6 @@ libgeos-dev
 
 installation
 tutorials
-references
 ```
 
 ## API Reference
@@ -99,4 +116,12 @@ references
 maxdepth: 1
 ---
 api
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+
+references
+contributors
 ```

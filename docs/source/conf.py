@@ -26,6 +26,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     "sphinx.ext.napoleon",
     'sphinxcontrib.bibtex',
+    'sphinx_design',
     "myst_parser",
     "nbsphinx",
     "sphinx_rtd_size",
@@ -54,12 +55,12 @@ html_theme_options = {
     "use_repository_button": True,
     "use_download_button": True,
     "use_fullscreen_button": True,
-    "collapse_navigation": True,
+    "collapse_navbar": True,
     "show_toc_level": 4,
     "show_navbar_depth": 2,
 
     "logo": {
-        "text": "pyCrossTalkeR",
+        "text": "<b>pyCrossTalkeR</b>",
     }
 }
 
