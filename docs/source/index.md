@@ -24,6 +24,7 @@ Ivan G. Costa<sup>1*</sup>
 
 ![Alt text](image.png)
 
+
 **Motivation:** Ligand-receptor (LR) analysis allows the characterization of cellular crosstalk from single cell RNA-seq data. However, current LR methods provide limited approaches for prioritization of cell types, ligands or receptors or characterizing changes in crosstalk between two biological conditions.
 
 **Results:** pyCrossTalkeR is a framework for network analysis and visualisation of LR networks. pyCrossTalkeR identifies relevant ligands, receptors and cell types contributing to changes in cell communication when contrasting two biological states: disease vs. homeostasis. A case study on scRNA-seq of human myeloproliferative neoplasms reinforces the strengths of pyCrossTalkeR for characterisation of changes in cellular crosstalk in disease state.
@@ -66,40 +67,36 @@ libgeos-dev
    - Store analysis results directly in AnnData and export to `.h5ad`
 
 
-# References
+## References
 
-[1] CrossTalkeR: Analysis and Visualisation of Ligand Receptor Networks [link](https://doi.org/10.1093/bioinformatics/btab370)
+[1] CrossTalkeR: Analysis and Visualisation of Ligand Receptor Networks. [link](https://doi.org/10.1093/bioinformatics/btab370)
 
 [2] Heterogeneous bone-marrow stromal progenitors drive myelofibrosis via a druggable alarmin axis. [link](https://www.cell.com/cell-stem-cell/fulltext/S1934-5909(20)30542-7#secsectitle0115)
 
-[3] Comparison of Resources and Methods to infer Cell-Cell Communication from Single-cell RNA Data [link](https://www.biorxiv.org/content/10.1101/2021.05.21.445160v1.full)
+[3] Comparison of Resources and Methods to infer Cell-Cell Communication from Single-cell RNA Data. [link](https://www.biorxiv.org/content/10.1101/2021.05.21.445160v1.full)
 
+
+
+## Tutorials
+
+* [pyCrossTalkeR Example - Human Myelofibrosis](notebooks/Human_Myelofibrosis)
+* [pyCrossTalkeR Example - Human Myocardial Infarction](notebooks/Human_Myocardial_Infarction)
+* [pyCrossTalkeR Example - LIANA+ Integration](notebooks/Integration_Liana_pyCrossTalkeR)
 
 
 ```{toctree}
----
-caption: Getting Started
-maxdepth: 4
----
+:maxdepth: 2
+:hidden:
 
-notebooks/Human_Myelofibrosis
-
-notebooks/Human_Myocardial_Infarction
-
-
----
-maxdepth: 3
----
-notebooks/Integration_Liana_pyCrossTalkeR
-
+installation
+tutorials
+references
 ```
 
-
-
+## API Reference
 ```{toctree}
 ---
-maxdepth: 2
-caption: API Reference
+maxdepth: 1
 ---
 api
 ```

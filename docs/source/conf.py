@@ -24,10 +24,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    "sphinx.ext.napoleon",
+    'sphinxcontrib.bibtex',
     "myst_parser",
-    "nbsphinx", ## for jupyter notebook
+    "nbsphinx",
     "sphinx_rtd_size",
 ]
+
+autosummary_generate = True
+bibtex_bibfiles = ['references.bib']
+bibtex_default_style = 'alpha'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
@@ -37,19 +43,29 @@ intersphinx_disabled_domains = ['std']
 
 templates_path = ['_templates']
 
-html_theme = 'sphinx_rtd_theme'
+#html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
+
+
+html_logo = "_static/logo.png"
+
+html_theme_options = {
+    "repository_url": "https://github.com/CostaLab/pyCrossTalkeR",
+    "use_repository_button": True,
+    "use_download_button": True,
+    "use_fullscreen_button": True,
+    "collapse_navigation": True,
+    "show_toc_level": 4,
+    "show_navbar_depth": 2,
+
+    "logo": {
+        "text": "pyCrossTalkeR",
+    }
+}
+
 
 sphinx_rtd_size_width = "85%"
 
-# -- Options for EPUB output
-epub_show_urls = 'footnote'    
-
-html_js_files = [
-    "require.min.js",
-    "custom.js",
-]
-
-# ---Hide prompts ([1]:, [24]:, etc.)
 nbsphinx_prolog = """
 .. raw:: html
 
@@ -63,3 +79,18 @@ nbsphinx_prolog = """
         }
     </style>
 """
+
+
+# -- Options for EPUB output
+epub_show_urls = 'footnote'    
+
+html_js_files = [
+    "require.min.js",
+    "custom.js",
+]
+
+html_static_path = ["_static"]
+
+html_css_files = [
+    "custom.css",
+]
