@@ -9,4 +9,3 @@ sankeyflow
 nbformat
 anndata
 scanpy
-sphinx-book-theme
