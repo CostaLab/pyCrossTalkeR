@@ -11,3 +11,4 @@ nbformat
 anndata
 scanpy
 sphinx-design
+sphinx-book-theme
