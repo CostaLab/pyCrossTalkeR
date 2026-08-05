@@ -1,22 +1,18 @@
 ```{eval-rst}
-.. module:: p
-```
-
-```{eval-rst}
 .. automodule:: pycrosstalker
-   :noindex:
 ```
 
 # API
 
 Import pycrosstalker as:
 
-```
+```python
 import pycrosstalker
 ```
 
-```{toctree}
-   :maxdepth: 1
-   tools
-   plots
+
+```{include} tools.md
+```
+
+```{include} plots.md
 ```

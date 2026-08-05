@@ -1,0 +1,5 @@
+img[src*="logo.png"] {
+    max-height: 140px !important;
+    height: 140px !important;
+    width: auto !important;
+}
