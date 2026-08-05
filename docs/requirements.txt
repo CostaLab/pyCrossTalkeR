@@ -10,3 +10,4 @@ sankeyflow
 nbformat
 anndata
 scanpy
+sphinx-design
