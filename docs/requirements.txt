@@ -1,6 +1,7 @@
 myst-parser
 nbsphinx
 sphinx_rtd_theme
+sphinxcontrib-bibtex
 sphinx
 plotly
 sphinx-rtd-size
