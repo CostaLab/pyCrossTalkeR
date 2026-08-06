@@ -2,10 +2,10 @@
 
 We want to express our gratitude to everyone who has contributed to **pyCrossTalkeR**.
 
-* **[James Nagai](https://github.com/username)**
-* **Vanessa Kloeker**
-* **Ruthvik Koppala**
-* **Michelle Jara Moscoso**
+* **[James Nagai](https://github.com/jsnagai)**
+* **[Vanessa Kloeker](https://github.com/vckraemer)** 
+* **[Ruthvik Koppala](https://github.com/ruthvik07)**
+* **[Michelle Jara Moscoso](https://github.com/jmichellejm)**
 ---
 
 ## Acknowledgments

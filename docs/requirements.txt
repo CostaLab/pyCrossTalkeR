@@ -1,6 +1,5 @@
 myst-parser
 nbsphinx
-sphinx_rtd_theme
 sphinxcontrib-bibtex
 sphinx
 plotly
@@ -12,3 +11,4 @@ anndata
 scanpy
 sphinx-design
 sphinx-book-theme
+pygments
