@@ -1,5 +1,21 @@
+/* --- Custom sidebar logo size --- */
 img[src*="logo.png"] {
-    max-height: 140px !important;
-    height: 140px !important;
-    width: auto !important;
+    max-height: 160px !important; /* Limits maximum image height */
+    width: auto !important; /* Maintains aspect ratio automatically */
 }
+
+/* --- Logo home page --- */
+/* Margin and spacing around the floating logo */
+img.logo-header {
+    background: none !important;
+    margin-left: 10px !important;
+    margin-bottom: 20px !important;
+    margin-top: -10px !important; /* Slightly aligns the top of the logo with the heading */
+}
+
+/* Improves text flow next to the logo */
+p {
+    text-align: justify;
+    line-height: 1.6 !important;
+}
+

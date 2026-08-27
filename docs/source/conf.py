@@ -26,21 +26,18 @@ extensions = [
     'sphinx.ext.intersphinx',
     "sphinx.ext.napoleon",
     'sphinxcontrib.bibtex',
+    'nbsphinx', 
     'sphinx_design',
-    "myst_parser",
-    "nbsphinx",
+    "myst_parser", 
+    'sphinx_book_theme' ,
     "sphinx_rtd_size",
 ]
 myst_enable_extensions = []
-
-autosummary_generate = True
+autosummary_generate = True # Auto-generates individual API doc pages from summary tables
 
 # -- BibTeX citation settings
 bibtex_bibfiles = ['references.bib']
 bibtex_default_style = 'alpha'
-
-# Sets the Pygments color scheme.
-pygments_style = 'colorful'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
@@ -48,24 +45,6 @@ intersphinx_mapping = {
 }
 intersphinx_disabled_domains = ['std']
 templates_path = ['_templates']
-
-# -- HTML output options
-html_theme = 'sphinx_book_theme'
-html_logo = "_static/logo.png"
-
-# Specific parameters passed directly to the 'sphinx_book_theme'.
-html_theme_options = {
-    "repository_url": "https://github.com/CostaLab/pyCrossTalkeR",
-    "use_repository_button": True,
-    "use_download_button": True,
-    "use_fullscreen_button": True,
-    "collapse_navbar": True,
-    "show_toc_level": 4,
-    "show_navbar_depth": 2,
-    "logo": {
-        "text": "<b>pyCrossTalkeR</b>",
-    }
-}
 
 sphinx_rtd_size_width = "85%"
 
@@ -88,6 +67,33 @@ nbsphinx_prolog = """
 # -- Options for EPUB output
 epub_show_urls = 'footnote'    
 
+# -- Options for HTML output -------------------------------------------------
+
+html_theme = 'sphinx_book_theme'
+html_logo = "_static/logo.png"
+
+
+# Specific parameters passed directly to the 'sphinx_book_theme'.
+html_theme_options = {
+    # URL of the GitHub repository
+    "repository_url": "https://github.com/CostaLab/pyCrossTalkeR",
+    # GitHub button in the top navigation bar
+    "use_repository_button": True,
+    # Show a download button (e.g., PDF or Markdown/RST)
+    "use_download_button": True,
+    # Full-screen reading mode
+    "use_fullscreen_button": True,
+    # Collapse inactive subsections in the left sidebar to keep it tidy
+    "collapse_navbar": True,
+    # Set the maximum depth of heading levels (H1 to H4) shown in the right-hand page TOC
+    "show_toc_level": 4,
+    # Control how many navigation levels deep are automatically expanded in the left sidebar
+    "show_navbar_depth": 2,
+    "logo": {
+        "text": "<b>pyCrossTalkeR</b>",
+    }
+}
+
 # -- Static files configuration
 html_js_files = [
     "require.min.js",
@@ -95,6 +101,8 @@ html_js_files = [
 ]
 
 html_static_path = ["_static"]
+
+# Link custom CSS (logo sizing and styling, located in '_static')
 html_css_files = [
     "custom.css",
 ]

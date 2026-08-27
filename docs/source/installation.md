@@ -8,7 +8,7 @@ pip install pycrosstallker
 
 
 
-*Note: Please avoid to use the following characters in celltype name: '$'*
+***Note:** Please avoid to use the following characters in celltype name: '$'*
 
 ## Possible system dependencies
 
