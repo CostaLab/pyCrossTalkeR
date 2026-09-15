@@ -26,7 +26,9 @@ dependencies = [
     "sankeyflow>=0.4.1",
     "gprofiler-official==1.0.0",
     "anndata (>=0.12.2,<0.13.0)",
-    "scanpy (>=1.11.4,<2.0.0)"
+    "scanpy (>=1.11.4,<2.0.0)",
+    "community-layout"
+    
 ]
 
 [build-system]
