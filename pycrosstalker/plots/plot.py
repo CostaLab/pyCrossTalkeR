@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from adjustText import adjust_text
 from gprofiler import GProfiler
 from sankeyflow import Sankey
+from community_layout.layout_class import CommunityLayout
 
 def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10,return_figure=False):
     """
