@@ -1,7 +1,16 @@
+# New layout tools 
+sphinxcontrib-bibtex
+sphinx-design
+pygments
+ipython
+
+# Documentation Tools
+sphinx-book-theme
 myst-parser
 nbsphinx
-sphinxcontrib-bibtex
 sphinx
+
+
 plotly
 sphinx-rtd-size
 gprofiler-official
@@ -9,6 +18,3 @@ sankeyflow
 nbformat
 anndata
 scanpy
-sphinx-design
-sphinx-book-theme
-pygments

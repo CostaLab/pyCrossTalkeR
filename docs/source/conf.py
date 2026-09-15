@@ -32,7 +32,7 @@ extensions = [
     'sphinx_book_theme' ,
     "sphinx_rtd_size",
 ]
-myst_enable_extensions = []
+
 autosummary_generate = True # Auto-generates individual API doc pages from summary tables
 
 # -- BibTeX citation settings
@@ -70,6 +70,7 @@ epub_show_urls = 'footnote'
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = 'sphinx_book_theme'
+pygments_style = 'sphinx'
 html_logo = "_static/logo.png"
 
 
