@@ -1,17 +1,17 @@
 [project]
 name = "pycrosstalker"
-version = "2.1.6"
+version = "2.1.7"
 description = ""
 authors = [
     { name = "jsnagai", email = "james.nagai@gmail.com" },
-    { name = "ruthvik07", email = "ruthvik.koppala@gmail.com" }
+    { name = "vckraemer", email = "vanessa.kloeker@gmail.com" },
 ]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11, <=3.14"
 
 dependencies = [
-    "pandas==2.2.2",
+    "pandas",
     "numpy>=1.24",
     "matplotlib>=3.9.1.post1",
     "seaborn>=0.13.2",
@@ -26,9 +26,8 @@ dependencies = [
     "sankeyflow>=0.4.1",
     "gprofiler-official==1.0.0",
     "anndata (>=0.12.2,<0.13.0)",
-    "scanpy (>=1.11.4,<2.0.0)",
-    "community-layout"
-    
+    "community-layout",
+    "scanpy"
 ]
 
 [build-system]

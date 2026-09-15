@@ -1,25 +1,18 @@
 ## Plots: `pl`
 
 ```{eval-rst}
-.. module:: pycrosstalker.plots
-```
+.. currentmodule:: pycrosstalker.plots
 
-```{eval-rst}
-.. currentmodule:: pycrosstalker
-```
-### Plots
-
-```{eval-rst}
 .. autosummary::
-   :toctree: generated/
+   :toctree: generated
 
-   plots.plot_cci
-   plots.plot_pca_LR_comparative
-   plots.plot_bar_rankings
-   plots.plot_sankey
-   plots.gene_annotation
-   plots.plot_volcano
-   plots.plot_clustermap
-   plots.plot_graph_clustermap
-   
+   plot_cci
+   plot_pca_LR_comparative
+   plot_bar_rankings
+   plot_sankey
+   gene_annotation
+   plot_volcane
+   plot_clustermap
+   plot_graph_clustermap
+
 ```

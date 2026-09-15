@@ -1,68 +1,70 @@
 ## Tools: `tl`
 
-```{eval-rst}
-.. module:: pycrosstalker.tools
-```
-
-```{eval-rst}
-.. currentmodule:: pycrosstalker
-```
-
 ### Generate Report
 
 ```{eval-rst}
-.. autosummary::
-   :toctree: generated/
+.. currentmodule:: pycrosstalker.tools
 
-   tools.generate_report.analise_LR
-  
+.. autosummary::
+   :toctree: generated
+
+   generate_report.analise_LR
 ```
+---
 
 ### Analysis Core
 
 #### Single Condition
 
 ```{eval-rst}
-.. autosummary::
-   :toctree: generated/
+.. currentmodule:: pycrosstalker.tools
 
-   tools.Single_Condition.read_lr_single_condition
-  
+.. autosummary::
+   :toctree: generated
+
+   Single_Condition.read_lr_single_condition
 ```
 
-#### Comparitive Condition
+#### Comparative Condition
 
 ```{eval-rst}
-.. autosummary::
-   :toctree: generated/
+.. currentmodule:: pycrosstalker.tools
 
-   tools.Comparative_condition.create_diff_table
-  
+.. autosummary::
+   :toctree: generated
+
+   Comparative_condition.create_diff_table
 ```
+---
 
 ### Utils
 
 ```{eval-rst}
+.. currentmodule:: pycrosstalker.tools
+
 .. autosummary::
-   :toctree: generated/
+   :toctree: generated
 
-   tools.utils.ranking
-   tools.utils.ranking_net
-   tools.utils.comparative_pagerank
-   tools.utils.comparative_med
-   tools.utils.add_node_type
-   tools.utils.fisher_test_cci
-   tools.utils.mannwhitneyu_test_cci
-   tools.utils.filtered_graphs
-  
+   utils.ranking
+   utils.ranking_net
+   utils.comparative_pagerank
+   utils.comparative_med
+   utils.add_node_type
+   utils.fisher_test_cci
+   utils.mannwhitneyu_test_cci
+   utils.filtered_graphs
 ```
+---
 
-### lrobject
+### LR Object
 
 ```{eval-rst}
-.. autosummary::
-   :toctree: generated/
+.. currentmodule:: pycrosstalker.tools
 
-   tools.lrobject
+.. autosummary::
+   :toctree: generated
+
+   LRObj
   
 ```
+---
