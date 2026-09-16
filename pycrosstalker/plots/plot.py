@@ -1,15 +1,20 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
+import igraph as ig
+import leidenalg
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+from matplotlib.colors import TwoSlopeNorm
+from matplotlib.patches import Patch
 import seaborn as sns
 import plotly.graph_objects as go
 from adjustText import adjust_text
 from gprofiler import GProfiler
 from sankeyflow import Sankey
-
+from community_layout.layout_class import CommunityLayout
 
 def plot_cci(graph, colors, plt_name, coords, pg, emax=None, leg=False, low=25, high=75, ignore_alpha=False, log=False, efactor=8, vfactor=12, vnames=True, figsize=None, scale_factor=2, node_size=2, font_size=10,return_figure=False):
     """
@@ -856,4 +861,992 @@ def plot_graph_clustermap(graph, weight="LRScore", title="Ligand-Receptor Heatma
     g.ax_heatmap.set_ylabel("Ligand Cluster")
     plt.title(title, fontsize=14)
 
+    plt.show()
+
+def parse_node(node_string):
+    """
+    This function parses a node string into its celltype, gene and class
+
+    Parameters
+    ----------
+    node_string :
+        Node label, e.g. "ImmatureNeutrophils/S100a8|L"
+
+    Returns
+    -------
+    Dict with keys 'celltype', 'gene' and 'class'
+
+    """
+
+    celltype, rest = node_string.split("/", 1)
+
+    gene, gene_class = rest.rsplit("|", 1)
+
+    return {
+        "celltype": celltype,
+        "gene": gene,
+        "class": gene_class
+    }
+
+def _prune_orphan_nodes(plot_nodes, plot_edges):
+    """
+    This function removes nodes not touched by any edge and rebuilds the layer index
+
+    Parameters
+    ----------
+    plot_nodes :
+        Mapping of node name to node attributes
+
+    plot_edges :
+        List of edges, each with 'source' and 'target' keys
+
+    Returns
+    -------
+    Tuple of pruned plot_nodes and rebuilt step->nodes layer index
+
+    """
+
+    used_nodes = set()
+
+    for edge in plot_edges:
+        used_nodes.add(edge["source"])
+        used_nodes.add(edge["target"])
+
+    plot_nodes = {
+        node: attrs
+        for node, attrs in plot_nodes.items()
+        if node in used_nodes
+    }
+
+    nodes_by_layer = defaultdict(list)
+
+    for node in plot_nodes:
+        step = int(node.split("__step")[-1])
+        nodes_by_layer[step].append(node)
+
+    return plot_nodes, nodes_by_layer
+
+
+def _as_list(value):
+    """
+    This function normalizes a single value or a list/tuple/set into a plain list
+
+    Parameters
+    ----------
+    value :
+        Single value, list/tuple/set of values, or None
+
+    Returns
+    -------
+    A plain list, or None if value is None
+
+    """
+
+    if value is None:
+        return None
+
+    if isinstance(value, (list, tuple, set)):
+        return list(value)
+
+    return [value]
+
+
+def plot_intracellular_signaling_network(
+    lrobj_tbl,
+    mode="LRTFL",
+    gene=None,
+    level=None,
+    celltype=None,
+    ligand_celltype=None,
+    receptor_celltype=None,
+    font_size=10,
+    node_spacing=2,
+    celltype_spacing=6,
+    step_spacing=4,
+    edge_width=4,
+    arrow_size=1.2,
+    top_n_per_step=None,
+    top_n_lr=None,
+    top_n_rtfl=None,
+    position="any"
+):
+    """
+    This function plots multi-step ligand-receptor-transcription factor
+    signaling cascades as a layered network, where each node is a
+    gene in a celltype (ligand, receptor or TF) and each edge is a
+    directed interaction coloured by its LRScore. The paths traced
+    depend on `mode`, and can be narrowed to genes, celltypes or the
+    strongest interactions via the filtering arguments.
+
+    Parameters
+    ----------
+    lrobj_tbl : pd.DataFrame
+        Signaling network data on gene level
+
+    mode : str
+        Path topology: "RTFL" (R->TF->L), "LRTFL" (L->R->TF->L) or "RTFLR" (R->TF->L->R)
+
+    gene : str or None
+        Gene of interest to filter on
+
+    level : str or None
+        Restrict gene filtering to a molecule class: "L", "R" or "TF"
+
+    celltype : str or None
+        Restrict gene/level filtering to a specific celltype (any node in the path)
+
+    ligand_celltype : str, list of str, or None
+        Restrict to paths whose source ligand belongs to the given celltype(s).
+        Only valid in "LRTFL" mode
+
+    receptor_celltype : str, list of str, or None
+        Restrict to paths whose receptor (and its intracellular TF and output
+        ligand) belongs to the given celltype(s)
+
+    position : str
+        Where the gene+level match must occur: "any", "first" or "last"
+
+    font_size : int
+        Node label font size
+
+    node_spacing : float
+        Vertical spacing between nodes of the same celltype within a layer
+
+    celltype_spacing : float
+        Vertical spacing between different celltypes within a layer
+
+    step_spacing : float
+        Horizontal spacing between signaling steps
+
+    edge_width : float
+        Line width for edges
+
+    arrow_size : float
+        Size of arrowheads
+
+    top_n_per_step : int or None
+        Keep only the strongest N edges per step (by |weight|), pruning orphan nodes
+
+    top_n_lr : int or None
+        Cap on the strongest ligand->receptor edges (anchor stage in "LRTFL",
+        last stage in "RTFLR", ignored in "RTFL")
+
+    top_n_rtfl : int or None
+        Cap on the strongest receptor->TF and TF->ligand edges, counted per
+        receptor celltype
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+
+    """
+
+    paths = []
+
+    G = nx.MultiDiGraph()
+
+    for _, row in lrobj_tbl.iterrows():
+
+        source = row["ligpair"]
+        target = row["recpair"]
+
+        source_info = parse_node(source)
+        target_info = parse_node(target)
+
+        # Add source node
+        G.add_node(
+            source,
+            celltype=source_info["celltype"],
+            gene=source_info["gene"],
+            molecule_class=source_info["class"]
+        )
+
+        # Add target node
+        G.add_node(
+            target,
+            celltype=target_info["celltype"],
+            gene=target_info["gene"],
+            molecule_class=target_info["class"]
+        )
+
+        # Add directed edge
+        G.add_edge(
+            source,
+            target,
+            weight=row["LRScore"],
+            interaction_type=row["interaction_type"],
+            cellpair=row["cellpair"]
+        )
+    
+    if mode == "RTFL":
+
+        receptors = [
+            n
+            for n, attrs in G.nodes(data=True)
+            if attrs["molecule_class"] == "R"
+        ]
+
+        for receptor in receptors:
+
+            for _, tf, edge1 in G.out_edges(receptor, data=True):
+
+                if edge1["interaction_type"] != "RTF":
+                    continue
+
+                for _, ligand, edge2 in G.out_edges(tf, data=True):
+
+                    if edge2["interaction_type"] != "TFL":
+                        continue
+
+                    paths.append([receptor, tf, ligand])
+
+    elif mode == "LRTFL":
+
+        ligands = [
+            n
+            for n, attrs in G.nodes(data=True)
+            if attrs["molecule_class"] == "L"
+        ]
+
+        for ligand in ligands:
+
+            for _, receptor, edge1 in G.out_edges(ligand, data=True):
+
+                if edge1["interaction_type"] != "LR":
+                    continue
+
+                for _, tf, edge2 in G.out_edges(receptor, data=True):
+
+                    if edge2["interaction_type"] != "RTF":
+                        continue
+
+                    for _, target_ligand, edge3 in G.out_edges(tf, data=True):
+
+                        if edge3["interaction_type"] != "TFL":
+                            continue
+
+                        paths.append([ligand, receptor, tf, target_ligand])
+
+    elif mode == "RTFLR":
+
+        receptors = [
+            n
+            for n, attrs in G.nodes(data=True)
+            if attrs["molecule_class"] == "R"
+        ]
+
+        for receptor in receptors:
+
+            for _, tf, edge1 in G.out_edges(receptor, data=True):
+
+                if edge1["interaction_type"] != "RTF":
+                    continue
+
+                for _, ligand, edge2 in G.out_edges(tf, data=True):
+
+                    if edge2["interaction_type"] != "TFL":
+                        continue
+
+                    for _, target_receptor, edge3 in G.out_edges(ligand, data=True):
+
+                        if edge3["interaction_type"] != "LR":
+                            continue
+
+                        paths.append([receptor, tf, ligand, target_receptor])
+
+    else:
+        raise ValueError("mode must be 'RTFL', 'LRTFL' or 'RTFLR'")
+
+    if position not in ("any", "first", "last"):
+        raise ValueError("position must be 'any', 'first', or 'last'")
+
+    if gene is not None or level is not None or celltype is not None:
+
+        filtered = []
+
+        for path in paths:
+
+            keep = False
+            last_index = len(path) - 1
+
+            for idx, node in enumerate(path):
+
+                attrs = G.nodes[node]
+
+                if gene is not None and attrs["gene"] != gene:
+                    continue
+
+                if level is not None and attrs["molecule_class"] != level:
+                    continue
+
+                if celltype is not None and attrs["celltype"] != celltype:
+                    continue
+
+                if position == "first" and idx != 0:
+                    continue
+
+                if position == "last" and idx != last_index:
+                    continue
+
+                keep = True
+                break
+
+            if keep:
+                filtered.append(path)
+
+        paths = filtered
+
+    ligand_celltype_list = _as_list(ligand_celltype)
+
+    if ligand_celltype_list is not None:
+
+        if mode != "LRTFL":
+            raise ValueError(
+                "ligand_celltype filters the incoming/source ligand "
+                "node, which only exists in LRTFL mode (RTFL and RTFLR "
+                "paths start at a receptor). Use mode='LRTFL', or filter "
+                "the output ligand instead via celltype/position='last'."
+            )
+
+        paths = [
+            path for path in paths
+            if G.nodes[path[0]]["celltype"] in ligand_celltype_list
+        ]
+
+    receptor_celltype_list = _as_list(receptor_celltype)
+
+    if receptor_celltype_list is not None:
+
+        receptor_idx = 1 if mode == "LRTFL" else 0
+        tf_idx = receptor_idx + 1
+        target_ligand_idx = receptor_idx + 2
+
+        filtered = []
+
+        for path in paths:
+
+            r_celltype = G.nodes[path[receptor_idx]]["celltype"]
+
+            if r_celltype not in receptor_celltype_list:
+                continue
+
+            tf_celltype = G.nodes[path[tf_idx]]["celltype"]
+            target_l_celltype = G.nodes[path[target_ligand_idx]]["celltype"]
+
+            if tf_celltype != r_celltype or target_l_celltype != r_celltype:
+                continue
+
+            filtered.append(path)
+
+        paths = filtered
+
+    if len(paths) == 0:
+        raise ValueError("No valid paths found after filtering.")
+
+    if top_n_lr is not None or top_n_rtfl is not None:
+        
+        cascade = {
+            "LRTFL": {
+                "stages": [("global", top_n_lr),
+                           ("per_celltype", top_n_rtfl),
+                           ("per_celltype", top_n_rtfl)],
+                "auth": True,
+            },
+            "RTFL": {
+                "stages": [("per_celltype", top_n_rtfl),
+                           ("per_celltype", top_n_rtfl)],
+                "auth": False,
+            },
+            "RTFLR": {
+                "stages": [("per_celltype", top_n_rtfl),
+                           ("per_celltype", top_n_rtfl),
+                           ("global", top_n_lr)],
+                "auth": True,
+            },
+        }[mode]
+        stages = cascade["stages"]
+
+        def _edge_weight(u, v):
+            return list(G.get_edge_data(u, v).values())[0]["weight"]
+
+        def _top_edges(edge_keys, n):
+            # edge_keys: iterable of (u, v) graph-node-name tuples.
+            keys = set(edge_keys)
+            if n is None:
+                return keys
+            ranked = sorted(
+                keys, key=lambda uv: abs(_edge_weight(*uv)), reverse=True
+            )
+            return set(ranked[:n])
+
+        def _top_edges_per_celltype(edge_keys, n):
+            keys = set(edge_keys)
+            if n is None:
+                return keys
+            buckets = defaultdict(set)
+            for u, v in keys:
+                buckets[G.nodes[u]["celltype"]].add((u, v))
+            kept = set()
+            for _, bucket in buckets.items():
+                kept |= _top_edges(bucket, n)
+            return kept
+
+        def _select(k, scope, n):
+            keys = ((q[k], q[k + 1]) for q in paths)
+            if scope == "global":
+                return _top_edges(keys, n)
+            return _top_edges_per_celltype(keys, n)
+
+        # --- Stage 0: the anchor ---
+        scope0, n0 = stages[0]
+        survivors = _select(0, scope0, n0)
+        paths = [p for p in paths if (p[0], p[1]) in survivors]
+        
+        authoritative = cascade["auth"] and n0 is not None and len(stages) > 1
+
+        reachable = {p[1] for p in paths} if authoritative else set()
+
+        for k in range(1, len(stages)):
+
+            scope_k, n_k = stages[k]
+            survivors = _select(k, scope_k, n_k)
+
+            if authoritative:
+                best_per_source = {}
+                for p in paths:
+                    src_node, dst_node = p[k], p[k + 1]
+                    if src_node not in reachable:
+                        continue
+                    cur = best_per_source.get(src_node)
+                    if cur is None or abs(_edge_weight(src_node, dst_node)) > abs(_edge_weight(*cur)):
+                        best_per_source[src_node] = (src_node, dst_node)
+                guaranteed = set(best_per_source.values())
+                survivors |= guaranteed
+                reachable = {dst for (_, dst) in guaranteed}
+
+            paths = [p for p in paths if (p[k], p[k + 1]) in survivors]
+
+        if len(paths) == 0:
+            raise ValueError(
+                "No complete paths survived top-N filtering. Try raising "
+                "top_n_lr / top_n_rtfl, or loosening other filters."
+            )
+
+    plot_nodes = {}
+    plot_edges = []
+
+    nodes_by_layer = defaultdict(list)
+
+    for path in paths:
+
+        for step, node in enumerate(path):
+
+            plot_node = f"{node}__step{step}"
+
+            if plot_node not in plot_nodes:
+
+                attrs = G.nodes[node]
+
+                plot_nodes[plot_node] = {
+                    "celltype": attrs["celltype"],
+                    "gene": attrs["gene"],
+                    "molecule_class": attrs["molecule_class"],
+                    "step": step
+                }
+
+                nodes_by_layer[step].append(plot_node)
+
+        for step in range(len(path) - 1):
+
+            source = path[step]
+            target = path[step + 1]
+
+            source_plot = f"{source}__step{step}"
+            target_plot = f"{target}__step{step+1}"
+
+            edge_data = list(G.get_edge_data(source, target).values())[0]
+
+            plot_edges.append({
+                "source": source_plot,
+                "target": target_plot,
+                "interaction_type": edge_data["interaction_type"],
+                "weight": edge_data["weight"]
+            })
+
+    _seen_transitions = {}
+    for edge in plot_edges:
+        _seen_transitions[(edge["source"], edge["target"])] = edge
+    plot_edges = list(_seen_transitions.values())
+
+    if top_n_per_step is not None:
+
+        step_edges = defaultdict(list)
+
+        for edge in plot_edges:
+            step = int(edge["source"].split("__step")[-1])
+            step_edges[step].append(edge)
+
+        filtered_edges = []
+
+        for step, edges in step_edges.items():
+
+            edges = sorted(edges, key=lambda x: abs(x["weight"]), reverse=True)
+            filtered_edges.extend(edges[:top_n_per_step])
+
+        plot_edges = filtered_edges
+
+    # Drop incomplete signaling paths
+
+    edge_lookup = {
+        (edge["source"], edge["target"]): edge for edge in plot_edges
+    }
+
+    kept_transitions = set(edge_lookup.keys())
+    final_transitions = set()
+
+    for path in paths:
+
+        transitions = [
+            (f"{path[step]}__step{step}", f"{path[step + 1]}__step{step + 1}")
+            for step in range(len(path) - 1)
+        ]
+
+        if all(t in kept_transitions for t in transitions):
+            final_transitions.update(transitions)
+
+    plot_edges = [edge_lookup[t] for t in final_transitions]
+
+    if len(plot_edges) == 0:
+        raise ValueError(
+            "No complete signaling paths survived filtering -- every "
+            "path lost at least one transition (e.g. its LR edge "
+            "passed top_n_lr but its RTF/TFL edges didn't pass "
+            "top_n_rtfl, or vice versa). Try raising top_n_lr / "
+            "top_n_rtfl / top_n_per_step, or loosening other filters."
+        )
+
+    # Always prune dangling/orphaned nodes after any edge-level filtering,
+    # regardless of which filter(s) above produced them.
+    plot_nodes, nodes_by_layer = _prune_orphan_nodes(plot_nodes, plot_edges)
+
+    if len(plot_nodes) == 0:
+        raise ValueError("No nodes left after filtering -- thresholds are too strict.")
+
+    # Node Positions
+    # 1. compute each layer's internal y-positions and total height
+    # 2. center every layer against the TRUE global max height
+ 
+    layer_positions = {}
+    layer_heights = {}
+
+    for step, layer_nodes in nodes_by_layer.items():
+
+        layer_nodes = sorted(
+            layer_nodes,
+            key=lambda n: (plot_nodes[n]["celltype"], plot_nodes[n]["gene"])
+        )
+
+        current_y = 0
+        prev_celltype = None
+        temp = []
+
+        for node in layer_nodes:
+
+            celltype_ = plot_nodes[node]["celltype"]
+
+            if prev_celltype is not None:
+                if celltype_ != prev_celltype:
+                    current_y += celltype_spacing
+                else:
+                    current_y += node_spacing
+
+            temp.append((node, current_y))
+            prev_celltype = celltype_
+
+        layer_positions[step] = temp
+        layer_heights[step] = current_y
+
+    global_height = max(layer_heights.values()) if layer_heights else 0
+
+    pos = {}
+
+    for step, temp in layer_positions.items():
+
+        y_offset = (global_height - layer_heights[step]) / 2
+
+        for node, y in temp:
+            pos[node] = (step * step_spacing, y + y_offset)
+
+    weights = np.array([e["weight"] for e in plot_edges])
+
+    abs_max = max(np.max(np.abs(weights)), 1e-6)
+
+    norm = mcolors.TwoSlopeNorm(vmin=-abs_max, vcenter=0, vmax=abs_max)
+
+    cmap = cm.get_cmap("bwr")
+
+    edge_traces = []
+    arrow_annotations = []
+
+    for edge in plot_edges:
+
+        x0, y0 = pos[edge["source"]]
+        x1, y1 = pos[edge["target"]]
+
+        color = mcolors.to_hex(cmap(norm(edge["weight"])))
+
+        edge_traces.append(
+            go.Scatter(
+                x=[x0, x1],
+                y=[y0, y1],
+                mode="lines",
+                line=dict(color=color, width=edge_width),
+                hoverinfo="text",
+                text=(
+                    f"{edge['interaction_type']}<br>"
+                    f"Score: {edge['weight']:.3f}"
+                ),
+                showlegend=False
+            )
+        )
+
+        arrow_annotations.append(
+            dict(
+                x=x1, y=y1,
+                ax=x0, ay=y0,
+                xref="x", yref="y",
+                axref="x", ayref="y",
+                showarrow=True,
+                arrowhead=3,
+                arrowsize=arrow_size,
+                arrowwidth=edge_width * 0.5,
+                arrowcolor=color
+            )
+        )
+
+    molecule_colors = {
+        "L": "#2E8B57",
+        "R": "#D62728",
+        "TF": "#9467BD"
+    }
+
+    node_x = []
+    node_y = []
+    node_text = []
+    node_hover = []
+    node_color = []
+
+    for node, attrs in plot_nodes.items():
+
+        x, y = pos[node]
+
+        node_x.append(x)
+        node_y.append(y)
+
+        node_text.append(
+            f"{attrs['celltype']}<br>"
+            f"{attrs['gene']} ({attrs['molecule_class']})"
+        )
+
+        node_hover.append(
+            f"Celltype: {attrs['celltype']}<br>"
+            f"Gene: {attrs['gene']}<br>"
+            f"Class: {attrs['molecule_class']}"
+        )
+
+        node_color.append(molecule_colors.get(attrs["molecule_class"], "gray"))
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode="markers+text",
+        text=node_text,
+        textposition="top center",
+        hovertext=node_hover,
+        hoverinfo="text",
+        marker=dict(
+            size=10,
+            color=node_color,
+            line=dict(width=1, color="black")
+        ),
+        textfont=dict(size=font_size),
+        showlegend=False
+    )
+
+
+    legend_names = {"L": "Ligand", "R": "Receptor", "TF": "Transcription Factor"}
+
+    legend_traces = []
+
+    for mol_type, color in molecule_colors.items():
+
+        legend_traces.append(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                marker=dict(size=10, color=color),
+                name=legend_names[mol_type],
+                showlegend=True
+            )
+        )
+
+    colorbar_trace = go.Scatter(
+        x=[None],
+        y=[None],
+        mode="markers",
+        marker=dict(
+            size=0.1,
+            color=[-abs_max, abs_max],
+            colorscale="RdBu",
+            cmin=-abs_max,
+            cmax=abs_max,
+            showscale=True,
+            colorbar=dict(
+                title="Score",
+                thickness=15,
+                len=0.35,
+                y=0.2,
+                x=1.02,
+                outlinewidth=0.5,
+                tickmode="array",
+                tickvals=[-abs_max, -abs_max / 2, 0, abs_max / 2, abs_max],
+                ticktext=[
+                    f"{-abs_max:.2f}",
+                    f"{-abs_max/2:.2f}",
+                    "0",
+                    f"{abs_max/2:.2f}",
+                    f"{abs_max:.2f}"
+                ]
+            )
+        ),
+        hoverinfo="none",
+        showlegend=False
+    )
+
+    fig = go.Figure(
+        data=edge_traces + [node_trace] + legend_traces + [colorbar_trace]
+    )
+
+    fig.update_layout(
+        width=2400,
+        height=max(1200, int(global_height * 20)),
+        plot_bgcolor="white",
+        annotations=arrow_annotations,
+        xaxis=dict(
+            title="Signaling Step",
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis=dict(
+            showgrid=False,
+            showticklabels=False,
+            zeroline=False
+        ),
+        legend=dict(
+            title="Node Type",
+            x=1.02,
+            y=0.95,
+            bgcolor="rgba(255,255,255,0.8)",
+            bordercolor="lightgray",
+            borderwidth=1,
+            font=dict(size=10)
+        ),
+        margin=dict(l=80, r=280, t=60, b=60)
+    )
+
+    return fig
+
+def get_community_cmap(n):
+    return plt.get_cmap("tab20", n)
+
+def cci_community_layout(
+    CCI_table,
+    method="leiden",
+    res=1.0,
+    compression=0.2,
+    seed=12,
+    spring_k=0.1,
+    spring_iterations_community=1000,
+    spring_iterations_nodes=500,
+    edge_width_scale=3.0,
+    edge_alpha_intra=0.7,
+    edge_alpha_inter=0.7,
+    node_size=300,
+    arrow_size=20,
+    figsize=[10, 10],
+):
+    """
+    Unified community layout for cell-cell communication networks.
+    Parameters
+    ----------
+    method : str
+        Community detection algorithm: "leiden" or "louvain".
+    spring_iterations_nodes : int
+        Only used when method="leiden" (per-community spring layout iterations).
+    spring_k : float
+        Spring layout k parameter. Leiden default: 0.1, Louvain default: 75.
+    """
+    # ---- Build similarity matrix ----
+    W = CCI_table.pivot_table(
+        index="from", columns="to", values="weight", fill_value=0.0
+    )
+    cells = W.index.to_numpy()
+
+    deg = W.abs().sum(axis=1)
+    deg_inv_sqrt = 1.0 / np.sqrt(deg.replace(0, np.nan))
+    W_deg = W.mul(deg_inv_sqrt, axis=0).mul(deg_inv_sqrt, axis=1).fillna(0)
+    K = 0.5 * (W_deg.T @ W_deg + W_deg @ W_deg.T)
+    K_np = K.values
+
+    # ---- Build undirected similarity graph ----
+    G = nx.Graph()
+    G.add_nodes_from(cells)
+    for i in range(len(cells)):
+        for j in np.argsort(K_np[i])[::-1]:
+            if j != i and K_np[i, j] > 0:
+                G.add_edge(cells[i], cells[j], weight=K_np[i, j])
+
+    # ---- Community detection + layout ----
+    if method == "leiden":
+        node_to_idx = {n: i for i, n in enumerate(G.nodes())}
+        idx_to_node = {i: n for n, i in node_to_idx.items()}
+        edges = [
+            (node_to_idx[u], node_to_idx[v], d["weight"])
+            for u, v, d in G.edges(data=True)
+        ]
+        g = ig.Graph(
+            edges=[(u, v) for u, v, _ in edges],
+            edge_attrs={"weight": [w for _, _, w in edges]},
+            directed=False,
+        )
+        partition = leidenalg.find_partition(
+            g,
+            leidenalg.RBConfigurationVertexPartition,
+            weights="weight",
+            resolution_parameter=res,
+            seed=seed,
+        )
+        for idx, comm in enumerate(partition.membership):
+            G.nodes[idx_to_node[idx]]["community"] = comm
+
+        communities = [
+            {n for n, d in G.nodes(data=True) if d["community"] == cid}
+            for cid in sorted(set(partition.membership))
+        ]
+
+        # Community-level graph for macro layout
+        G_comm = nx.Graph()
+        for cid in range(len(communities)):
+            G_comm.add_node(cid)
+        for u, v, d in G.edges(data=True):
+            cu, cv = G.nodes[u]["community"], G.nodes[v]["community"]
+            if cu != cv:
+                w = d.get("weight", 1.0)
+                if G_comm.has_edge(cu, cv):
+                    G_comm[cu][cv]["weight"] += w
+                else:
+                    G_comm.add_edge(cu, cv, weight=w)
+
+        pos_comm = nx.spring_layout(
+            G_comm, k=spring_k, iterations=spring_iterations_community, seed=seed
+        )
+        pos = {}
+        for cid, nodes in enumerate(communities):
+            subG = G.subgraph(nodes)
+            local_pos = nx.spring_layout(
+                subG, k=spring_k, iterations=spring_iterations_nodes, seed=seed
+            )
+            center = pos_comm[cid]
+            for n, p in local_pos.items():
+                pos[n] = center + compression * p
+
+    elif method == "louvain":
+        cl = CommunityLayout(
+            G,
+            community_compression=compression,
+            layout_algorithm=nx.spring_layout,
+            layout_kwargs={"k": spring_k, "iterations": spring_iterations_community},
+            community_algorithm=nx.algorithms.community.louvain_communities,
+            community_kwargs={"resolution": res, "seed": seed, "weight": "weight"},
+        )
+        pos = cl.full_positions
+        communities = list(cl.communities())
+
+    else:
+        raise ValueError(f"Unknown method '{method}'. Choose 'leiden' or 'louvain'.")
+
+    # ---- Build directed signed graph for drawing ----
+    G_signed_dir = nx.DiGraph()
+    for _, row in CCI_table.iterrows():
+        if method == "louvain" and row["weight"] == 0:
+            continue
+        G_signed_dir.add_edge(row["from"], row["to"], weight=row["weight"])
+
+    weights = np.array([d["weight"] for _, _, d in G_signed_dir.edges(data=True)])
+    norm = TwoSlopeNorm(
+        vmin=-abs(weights).max(), vcenter=0.0, vmax=abs(weights).max()
+    )
+    edge_colors = cm.coolwarm(norm(weights))
+    edge_widths = 0.6 + edge_width_scale * np.abs(weights) / np.max(np.abs(weights))
+
+    node_comm = {n: cid for cid, nodes in enumerate(communities) for n in nodes}
+    n_comms = len(communities)
+    cmap = get_community_cmap(n_comms)
+    nodes = list(G_signed_dir.nodes())
+    node_colors = [cmap(node_comm[n]) for n in nodes]
+    edge_alphas = [
+        edge_alpha_intra if node_comm[u] == node_comm[v] else edge_alpha_inter
+        for u, v in G_signed_dir.edges()
+    ]
+
+    # ---- Plot ----
+    fig, ax = plt.subplots(figsize=figsize)
+
+    nx.draw_networkx_nodes(
+        G_signed_dir, pos, nodelist=nodes, node_color=node_colors,
+        node_size=node_size, edgecolors="black", linewidths=0.7, ax=ax,
+    )
+    for (u, v), c, w, a in zip(G_signed_dir.edges(), edge_colors, edge_widths, edge_alphas):
+        nx.draw_networkx_edges(
+            G_signed_dir, pos, edgelist=[(u, v)], edge_color=[c], width=w,
+            alpha=a, arrows=True, arrowstyle="-|>", arrowsize=arrow_size,
+            connectionstyle="arc3,rad=0.15", ax=ax,
+        )
+
+    texts = [
+        ax.text(
+            x, y, node, fontsize=9, ha="center", va="center",
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.5, pad=0.2),
+            zorder=10,
+        )
+        for node, (x, y) in pos.items()
+    ]
+    adjust_text(
+        texts, ax=ax, expand_points=(1.2, 1.2), expand_text=(1.2, 1.2),
+        force_text=0.8, force_points=0.2,
+        arrowprops=dict(arrowstyle="-", color="gray", lw=0.5, alpha=0.6),
+    )
+
+    comm_handles = [
+        Patch(facecolor=cmap(i), edgecolor="black", label=f"Community {i}")
+        for i in range(n_comms)
+    ]
+    ax.legend(
+        handles=comm_handles, title="Communication communities",
+        bbox_to_anchor=(1.02, 1.0), loc="upper left",
+    )
+
+    sm = cm.ScalarMappable(cmap=cm.coolwarm, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax, shrink=0.4)
+    cbar.set_label("Differential LR interaction score")
+
+    ax.set_title(
+        f"Cell–cell communication community network\n"
+        f"{method.capitalize()} resolution: {res}",
+        fontsize=14,
+    )
+    ax.axis("off")
+    plt.tight_layout()
     plt.show()

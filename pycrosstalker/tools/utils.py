@@ -494,8 +494,10 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
             ctr_name = pair[1]
             exp_name = pair[0]
             
-            c = data['tables'][ctr_name].groupby('cellpair').size().reset_index(name='measure')
-            e = data['tables'][exp_name].groupby('cellpair').size().reset_index(name='measure')
+            ctr_tbl = data['tables'][ctr_name]
+            exp_tbl = data['tables'][exp_name]
+            c = ctr_tbl[ctr_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
+            e = exp_tbl[exp_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
 
             joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
             joined.fillna(0, inplace=True)
@@ -512,14 +514,16 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
     else:
         if len(data['tables']) >= 2:
             c_key = list(data['tables'].keys())[0]
-            c = data['tables'][c_key].groupby('cellpair').size().reset_index(name='measure')
+            c_tbl = data['tables'][c_key]
+            c = c_tbl[c_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
 
             for i in range(1, len(data['tables'])):
                 if '_x_' not in list(data['tables'].keys())[i]:
-                    e = data['tables'][list(data['tables'].keys())[i]].groupby('cellpair').size().reset_index(name='measure')
+                    e_tbl = data['tables'][list(data['tables'].keys())[i]]
+                    e = e_tbl[e_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
 
                     # Merge control and experimental data on 'cellpair'
-                    joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
+                    joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
                     joined.fillna(0, inplace=True)
 
                     pval_df = _pairwise_stats(joined, rng=rng)
@@ -628,8 +632,10 @@ def mannwhitneyu_test_cci(annData, measure, out_path, comparison=None):
 
             results = []
             for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
-                c = data['tables'][ctr_name].loc[data['tables'][ctr_name]['cellpair'] == cellpair, ['allpair', measure]]
-                e = data['tables'][exp_name].loc[data['tables'][exp_name]['cellpair'] == cellpair, ['allpair', measure]]
+                ctr_tbl = data['tables'][ctr_name]
+                exp_tbl = data['tables'][exp_name]
+                c = ctr_tbl.loc[(ctr_tbl['cellpair'] == cellpair) & (ctr_tbl['type_gene_A'] == "Ligand"), ['allpair', measure]]
+                e = exp_tbl.loc[(exp_tbl['cellpair'] == cellpair) & (exp_tbl['type_gene_A'] == "Ligand"), ['allpair', measure]]
 
                 #merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
                 merged = pd.merge(c, e, on='allpair', how='inner')
@@ -656,8 +662,9 @@ def mannwhitneyu_test_cci(annData, measure, out_path, comparison=None):
 
                 results = []
                 for cellpair in np.unique(np.concatenate(list(lcellpair.values()))):
-                    c = data['tables'][c_key].loc[data['tables'][c_key]['cellpair'] == cellpair, ['allpair', measure]]
-                    e = df.loc[df['cellpair'] == cellpair, ['allpair', measure]]
+                    c_tbl = data['tables'][c_key]
+                    c = c_tbl.loc[(c_tbl['cellpair'] == cellpair) & (c_tbl['type_gene_A'] == "Ligand"), ['allpair', measure]]
+                    e = df.loc[(df['cellpair'] == cellpair) & (df['type_gene_A'] == "Ligand"), ['allpair', measure]]
 
                     #merged = pd.merge(c, e, on='allpair', how='outer').fillna(0)
                     merged = pd.merge(c, e, on='allpair', how='inner')
