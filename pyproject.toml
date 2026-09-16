@@ -27,7 +27,8 @@ dependencies = [
     "gprofiler-official==1.0.0",
     "anndata (>=0.12.2,<0.13.0)",
     "community-layout",
-    "scanpy"
+    "scanpy",
+    "leidenalg"
 ]
 
 [build-system]
