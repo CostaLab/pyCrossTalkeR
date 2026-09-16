@@ -499,7 +499,7 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
             c = ctr_tbl[ctr_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
             e = exp_tbl[exp_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
 
-            joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
+            joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
             joined.fillna(0, inplace=True)
 
             pval_df = _pairwise_stats(joined, rng=rng)
@@ -523,7 +523,7 @@ def fisher_test_cci(annData, measure, out_path, comparison=None):
                     e = e_tbl[e_tbl['type_gene_A'] == "Ligand"].groupby('cellpair').size().reset_index(name='measure')
 
                     # Merge control and experimental data on 'cellpair'
-                    joined = pd.merge(c, e, on='cellpair', how='outer', suffixes=('_ctr', '_exp'))
+                    joined = pd.merge(c, e, on='cellpair', how='inner', suffixes=('_ctr', '_exp'))
                     joined.fillna(0, inplace=True)
 
                     pval_df = _pairwise_stats(joined, rng=rng)
