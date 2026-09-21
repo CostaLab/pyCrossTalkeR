@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
-import igraph as ig
 import leidenalg
 from collections import defaultdict
 import matplotlib.pyplot as plt
@@ -1676,6 +1675,10 @@ def cci_community_layout(
     arrow_size=20,
     figsize=[10, 10],
 ):
+    import igraph as ig
+    import leidenalg 
+
+    
     """
     Unified community layout for cell-cell communication networks.
     Parameters

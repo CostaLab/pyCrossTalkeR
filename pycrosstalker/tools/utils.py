@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-import igraph
 import itertools
 from scipy.stats import fisher_exact, MonteCarloMethod, mannwhitneyu, gmean
 from scipy.cluster.hierarchy import linkage, leaves_list
