@@ -25,13 +25,13 @@ dependencies = [
     "sankeyflow>=0.4.1",
     "gprofiler-official==1.0.0",
     "anndata",
-    "community-layout",
     "scanpy"
 ]
 [project.optional-dependencies]
 community = [
     "igraph>=0.11.6",  # only installed if user asks for i
     "leidenalg"
+    "community-layout",
 ]
 
 [build-system]
