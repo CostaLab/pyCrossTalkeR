@@ -44,7 +44,7 @@ pillow==12.3.0
 plotly==7.1.0
 plotnine==0.15.8
 pluggy==1.6.0
-pycrosstalker @ file:///home/james/pyCrossTalkeR/dist/pycrosstalker-2.1.7-py3-none-any.whl#sha256=b387fd24893f8969654ba2d19190b857ff9c4ce2589d235c4f116e41ecf0db36
+pycrosstalker
 Pygments==2.19.2
 pynndescent==0.6.0
 pyparsing==3.3.2
