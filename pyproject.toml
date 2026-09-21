@@ -27,11 +27,12 @@ dependencies = [
     "anndata",
     "scanpy"
 ]
+
 [project.optional-dependencies]
 community = [
     "igraph>=0.11.6",  # only installed if user asks for i
-    "leidenalg"
-    "community-layout",
+    "leidenalg",
+    "community-layout"
 ]
 
 [build-system]
