@@ -5,6 +5,7 @@
 
 .. autosummary::
    :toctree: generated
+   :nosignatures:
 
    plot_cci
    plot_pca_LR_comparative
